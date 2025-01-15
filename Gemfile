@@ -27,3 +27,5 @@ group :rubocop do
   gem "rubocop-rails-omakase"
   gem "rubocop-packaging"
 end
+
+gem "haystack-rails", path: "./haystack-rails"
