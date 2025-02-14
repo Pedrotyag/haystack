@@ -7,7 +7,7 @@ Gem::Specification.new do |spec|
   spec.version       = Haystack::VERSION
   spec.authors       = ["Code Team"]
   spec.description   = spec.summary = "A gem that provides a client interface for the Haystack error and performance logger"
-  spec.email         = "accounts@sentry.io"
+  spec.email         = "accounts@codefarm.io"
   spec.license       = 'MIT'
 
   spec.platform = Gem::Platform::RUBY
@@ -33,5 +33,5 @@ Gem::Specification.new do |spec|
   spec.add_dependency "bigdecimal"
 
   # Dependência automática para projetos Rails
-  spec.add_dependency "haystack-rails", "~> 1.0"
+  spec.add_dependency "haystack-rails"
 end

@@ -36,7 +36,7 @@ class HelloController < ActionController::Base
   end
 
   def reporting
-    render plain: Sentry.last_event_id
+    render plain: Haystack.last_event_id
   end
 
   def view_exception

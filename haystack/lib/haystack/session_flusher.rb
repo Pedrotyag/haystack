@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Sentry
+module Haystack
   class SessionFlusher < ThreadedPeriodicWorker
     FLUSH_INTERVAL = 60
 

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Sentry
+module Haystack
   module Utils
     module EncodingHelper
       def self.encode_to_utf_8(value)

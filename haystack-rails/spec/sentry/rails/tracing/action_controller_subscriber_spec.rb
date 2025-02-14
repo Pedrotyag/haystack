@@ -2,9 +2,9 @@
 
 require "spec_helper"
 
-RSpec.describe Sentry::Rails::Tracing::ActionControllerSubscriber, :subscriber, type: :request do
+RSpec.describe Haystack::Rails::Tracing::ActionControllerSubscriber, :subscriber, type: :request do
   let(:transport) do
-    Sentry.get_current_client.transport
+    Haystack.get_current_client.transport
   end
 
   context "when transaction is sampled" do
@@ -23,7 +23,7 @@ RSpec.describe Sentry::Rails::Tracing::ActionControllerSubscriber, :subscriber, 
 
     it "logs deprecation message" do
       expect(string_io.string).to include(
-        "DEPRECATION WARNING: sentry-rails has changed its approach on controller span recording and Sentry::Rails::Tracing::ActionControllerSubscriber is now depreacted."
+        "DEPRECATION WARNING: haystack-rails has changed its approach on controller span recording and Haystack::Rails::Tracing::ActionControllerSubscriber is now depreacted."
       )
     end
 
@@ -51,8 +51,8 @@ RSpec.describe Sentry::Rails::Tracing::ActionControllerSubscriber, :subscriber, 
     end
 
     it "doesn't record spans" do
-      transaction = Sentry::Transaction.new(sampled: false, hub: Sentry.get_current_hub)
-      Sentry.get_current_scope.set_span(transaction)
+      transaction = Haystack::Transaction.new(sampled: false, hub: Haystack.get_current_hub)
+      Haystack.get_current_scope.set_span(transaction)
 
       get "/world"
 

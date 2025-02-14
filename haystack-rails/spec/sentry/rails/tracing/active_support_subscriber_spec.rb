@@ -2,9 +2,9 @@
 
 require "spec_helper"
 
-RSpec.describe Sentry::Rails::Tracing::ActiveSupportSubscriber, :subscriber, type: :request do
+RSpec.describe Haystack::Rails::Tracing::ActiveSupportSubscriber, :subscriber, type: :request do
   let(:transport) do
-    Sentry.get_current_client.transport
+    Haystack.get_current_client.transport
   end
 
   context "when transaction is sampled" do
@@ -16,8 +16,8 @@ RSpec.describe Sentry::Rails::Tracing::ActiveSupportSubscriber, :subscriber, typ
     end
 
     it "tracks cache write" do
-      transaction = Sentry::Transaction.new(sampled: true, hub: Sentry.get_current_hub)
-      Sentry.get_current_scope.set_span(transaction)
+      transaction = Haystack::Transaction.new(sampled: true, hub: Haystack.get_current_hub)
+      Haystack.get_current_scope.set_span(transaction)
 
       Rails.cache.write("my_cache_key", "my_cache_value")
       transaction.finish
@@ -37,8 +37,8 @@ RSpec.describe Sentry::Rails::Tracing::ActiveSupportSubscriber, :subscriber, typ
 
       Rails.cache.write("my_cache_key", 0)
 
-      transaction = Sentry::Transaction.new(sampled: true, hub: Sentry.get_current_hub)
-      Sentry.get_current_scope.set_span(transaction)
+      transaction = Haystack::Transaction.new(sampled: true, hub: Haystack.get_current_hub)
+      Haystack.get_current_scope.set_span(transaction)
       Rails.cache.increment("my_cache_key")
 
       transaction.finish
@@ -57,8 +57,8 @@ RSpec.describe Sentry::Rails::Tracing::ActiveSupportSubscriber, :subscriber, typ
 
       Rails.cache.write("my_cache_key", 0)
 
-      transaction = Sentry::Transaction.new(sampled: true, hub: Sentry.get_current_hub)
-      Sentry.get_current_scope.set_span(transaction)
+      transaction = Haystack::Transaction.new(sampled: true, hub: Haystack.get_current_hub)
+      Haystack.get_current_scope.set_span(transaction)
       Rails.cache.decrement("my_cache_key")
 
       transaction.finish
@@ -72,8 +72,8 @@ RSpec.describe Sentry::Rails::Tracing::ActiveSupportSubscriber, :subscriber, typ
     end
 
     it "tracks cache read" do
-      transaction = Sentry::Transaction.new(sampled: true, hub: Sentry.get_current_hub)
-      Sentry.get_current_scope.set_span(transaction)
+      transaction = Haystack::Transaction.new(sampled: true, hub: Haystack.get_current_hub)
+      Haystack.get_current_scope.set_span(transaction)
       Rails.cache.read("my_cache_key")
 
       transaction.finish
@@ -87,8 +87,8 @@ RSpec.describe Sentry::Rails::Tracing::ActiveSupportSubscriber, :subscriber, typ
     end
 
     it "tracks cache delete" do
-      transaction = Sentry::Transaction.new(sampled: true, hub: Sentry.get_current_hub)
-      Sentry.get_current_scope.set_span(transaction)
+      transaction = Haystack::Transaction.new(sampled: true, hub: Haystack.get_current_hub)
+      Haystack.get_current_scope.set_span(transaction)
 
       Rails.cache.read("my_cache_key")
 
@@ -102,8 +102,8 @@ RSpec.describe Sentry::Rails::Tracing::ActiveSupportSubscriber, :subscriber, typ
       expect(cache_transaction[:spans][0][:origin]).to eq("auto.cache.rails")
     end
     it "tracks cache prune" do
-      transaction = Sentry::Transaction.new(sampled: true, hub: Sentry.get_current_hub)
-      Sentry.get_current_scope.set_span(transaction)
+      transaction = Haystack::Transaction.new(sampled: true, hub: Haystack.get_current_hub)
+      Haystack.get_current_scope.set_span(transaction)
 
       Rails.cache.write("my_cache_key", 123, expires_in: 0.seconds)
 
@@ -123,8 +123,8 @@ RSpec.describe Sentry::Rails::Tracing::ActiveSupportSubscriber, :subscriber, typ
       skip("cache.hit is unset on Rails 6.0.x.") if Rails.version.to_i == 6
 
       Rails.cache.write("my_cache_key", "my_cache_value")
-      transaction = Sentry::Transaction.new(sampled: true, hub: Sentry.get_current_hub)
-      Sentry.get_current_scope.set_span(transaction)
+      transaction = Haystack::Transaction.new(sampled: true, hub: Haystack.get_current_hub)
+      Haystack.get_current_scope.set_span(transaction)
       Rails.cache.read("my_cache_key")
       Rails.cache.read("my_cache_key_non_existing")
 
@@ -146,8 +146,8 @@ RSpec.describe Sentry::Rails::Tracing::ActiveSupportSubscriber, :subscriber, typ
 
     it "tracks cache delete" do
       Rails.cache.write("my_cache_key", "my_cache_value")
-      transaction = Sentry::Transaction.new(sampled: true, hub: Sentry.get_current_hub)
-      Sentry.get_current_scope.set_span(transaction)
+      transaction = Haystack::Transaction.new(sampled: true, hub: Haystack.get_current_hub)
+      Haystack.get_current_scope.set_span(transaction)
       Rails.cache.delete("my_cache_key")
 
       transaction.finish

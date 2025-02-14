@@ -1,0 +1,30 @@
+{
+    "folders": [
+        {
+            "path": "haystack-ruby"
+        },
+        {
+            "path": "haystack-rails"
+        },
+        {
+            "path": "haystack-sidekiq"
+        },
+        {
+            "path": "haystack-delayed_job"
+        },
+        {
+            "path": "haystack-resque"
+        },
+        {
+            "path": "haystack-opentelemetry"
+        },
+        {
+            "path": ".github"
+        }
+    ],
+    "extensions": {
+        "recommendations": [
+            "Shopify.ruby-lsp"
+        ]
+    }
+}

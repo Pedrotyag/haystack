@@ -2,9 +2,9 @@
 
 require "spec_helper"
 
-RSpec.describe Sentry::Rails, type: :request do
+RSpec.describe Haystack::Rails, type: :request do
   let(:transport) do
-    Sentry.get_current_client.transport
+    Haystack.get_current_client.transport
   end
 
   let(:event) do
@@ -23,43 +23,43 @@ RSpec.describe Sentry::Rails, type: :request do
     it "inserts middleware to a correct position" do
       app = Rails.application
       index_of_executor = app.middleware.find_index { |m| m == ActionDispatch::ShowExceptions }
-      expect(app.middleware.find_index(Sentry::Rails::CaptureExceptions)).to eq(index_of_executor + 1)
+      expect(app.middleware.find_index(Haystack::Rails::CaptureExceptions)).to eq(index_of_executor + 1)
       index_of_debug_exceptions = app.middleware.find_index { |m| m == ActionDispatch::DebugExceptions }
-      expect(app.middleware.find_index(Sentry::Rails::RescuedExceptionInterceptor)).to eq(index_of_debug_exceptions + 1)
+      expect(app.middleware.find_index(Haystack::Rails::RescuedExceptionInterceptor)).to eq(index_of_debug_exceptions + 1)
     end
 
     it "propagates timezone to cron config" do
       # cron.default_timezone is set to nil by default
-      expect(Sentry.configuration.cron.default_timezone).to eq("Etc/UTC")
+      expect(Haystack.configuration.cron.default_timezone).to eq("Etc/UTC")
     end
 
     it "inserts a callback to disable background_worker for the runner mode" do
-      Sentry.configuration.background_worker_threads = 10
+      Haystack.configuration.background_worker_threads = 10
 
       Rails.application.load_runner
 
-      expect(Sentry.configuration.background_worker_threads).to eq(0)
+      expect(Haystack.configuration.background_worker_threads).to eq(0)
     end
 
     describe "logger detection" do
       it "sets a duplicated Rails logger as the SDK's logger" do
         if Gem::Version.new(Rails.version) > Gem::Version.new("7.1.0.beta")
-          expect(Sentry.configuration.logger).to be_a(ActiveSupport::BroadcastLogger)
+          expect(Haystack.configuration.logger).to be_a(ActiveSupport::BroadcastLogger)
 
-          Sentry.configuration.logger.level = ::Logger::WARN
+          Haystack.configuration.logger.level = ::Logger::WARN
 
           # Configuring the SDK's logger should not affect the Rails logger
           expect(Rails.logger.broadcasts.first).to be_a(ActiveSupport::Logger)
           expect(Rails.logger.broadcasts.first.level).to eq(::Logger::DEBUG)
-          expect(Sentry.configuration.logger.level).to eq(::Logger::WARN)
+          expect(Haystack.configuration.logger.level).to eq(::Logger::WARN)
         else
-          expect(Sentry.configuration.logger).to be_a(ActiveSupport::Logger)
+          expect(Haystack.configuration.logger).to be_a(ActiveSupport::Logger)
 
-          Sentry.configuration.logger.level = ::Logger::WARN
+          Haystack.configuration.logger.level = ::Logger::WARN
 
           # Configuring the SDK's logger should not affect the Rails logger
           expect(Rails.logger.level).to eq(::Logger::DEBUG)
-          expect(Sentry.configuration.logger.level).to eq(::Logger::WARN)
+          expect(Haystack.configuration.logger.level).to eq(::Logger::WARN)
         end
       end
 
@@ -70,24 +70,24 @@ RSpec.describe Sentry::Rails, type: :request do
           config.logger = logger
         end
 
-        expect(Sentry.configuration.logger).to eq(logger)
+        expect(Haystack.configuration.logger).to eq(logger)
       end
 
       it "doesn't cause error if Rails::Logger is not present during SDK initialization" do
         Rails.logger = nil
 
-        Sentry.init
+        Haystack.init
 
-        expect(Sentry.configuration.logger).to be_a(Sentry::Logger)
+        expect(Haystack.configuration.logger).to be_a(Haystack::Logger)
       end
     end
 
-    it "sets Sentry.configuration.project_root correctly" do
-      expect(Sentry.configuration.project_root).to eq(Rails.root.to_s)
+    it "sets Haystack.configuration.project_root correctly" do
+      expect(Haystack.configuration.project_root).to eq(Rails.root.to_s)
     end
 
     it "doesn't clobber a manually configured release" do
-      expect(Sentry.configuration.release).to eq('beta')
+      expect(Haystack.configuration.release).to eq('beta')
     end
 
     it "sets transaction to ControllerName#method and sets correct source" do
@@ -111,7 +111,7 @@ RSpec.describe Sentry::Rails, type: :request do
     it "sets the error event id to env" do
       get "/exception"
 
-      expect(response.request.env["sentry.error_event_id"]).to eq(event["event_id"])
+      expect(response.request.env["haystack.error_event_id"]).to eq(event["event_id"])
     end
   end
 
@@ -127,7 +127,7 @@ RSpec.describe Sentry::Rails, type: :request do
       fork do
         pipe_in.close
 
-        allow(Sentry::Rails).to receive(:capture_exception) do |event|
+        allow(Haystack::Rails).to receive(:capture_exception) do |event|
           pipe_out.puts event
         end
 
@@ -163,7 +163,7 @@ RSpec.describe Sentry::Rails, type: :request do
   RSpec.shared_examples "report_rescued_exceptions" do
     context "with report_rescued_exceptions = true" do
       before do
-        Sentry.configuration.rails.report_rescued_exceptions = true
+        Haystack.configuration.rails.report_rescued_exceptions = true
       end
 
       it "captures exceptions" do
@@ -178,7 +178,7 @@ RSpec.describe Sentry::Rails, type: :request do
 
     context "with report_rescued_exceptions = false" do
       before do
-        Sentry.configuration.rails.report_rescued_exceptions = false
+        Haystack.configuration.rails.report_rescued_exceptions = false
       end
 
       it "doesn't report rescued exceptions" do
@@ -229,7 +229,7 @@ RSpec.describe Sentry::Rails, type: :request do
 
       expect(event["exception"]["values"][0]["type"]).to eq("RuntimeError")
       expect(event["exception"]["values"][0]["value"]).to match("An unhandled exception!")
-      expect(event["sdk"]).to eq("name" => "sentry.ruby.rails", "version" => Sentry::Rails::VERSION)
+      expect(event["sdk"]).to eq("name" => "haystack.ruby.rails", "version" => Haystack::Rails::VERSION)
     end
 
     it "filters exception backtrace with custom BacktraceCleaner" do
@@ -301,8 +301,8 @@ RSpec.describe Sentry::Rails, type: :request do
       end
     end
 
-    it "sets Sentry.configuration.trusted_proxies correctly" do
-      expect(Sentry.configuration.trusted_proxies).to eq(["5.5.5.5"])
+    it "sets Haystack.configuration.trusted_proxies correctly" do
+      expect(Haystack.configuration.trusted_proxies).to eq(["5.5.5.5"])
     end
   end
 
@@ -312,7 +312,7 @@ RSpec.describe Sentry::Rails, type: :request do
         make_basic_app
       end
 
-      it "doesn't register Sentry::Rails::ErrorSubscriber" do
+      it "doesn't register Haystack::Rails::ErrorSubscriber" do
         Rails.error.report(Exception.new, handled: false)
 
         expect(transport.events.count).to eq(0)
@@ -330,7 +330,7 @@ RSpec.describe Sentry::Rails, type: :request do
         end
       end
 
-      it "registers Sentry::Rails::ErrorSubscriber to Rails" do
+      it "registers Haystack::Rails::ErrorSubscriber to Rails" do
         Rails.error.report(Exception.new, handled: false)
 
         expect(transport.events.count).to eq(1)
@@ -381,11 +381,11 @@ RSpec.describe Sentry::Rails, type: :request do
 
       it "skips non-string and non-exception errors" do
         expect {
-          Sentry.init do |config|
+          Haystack.init do |config|
             config.logger = Logger.new($stdout)
           end
 
-          Sentry.logger.debug("Expected an Exception or a String, got: #{312.inspect}")
+          Haystack.logger.debug("Expected an Exception or a String, got: #{312.inspect}")
 
           Rails.error.report(312, severity: :info, handled: true, context: { foo: "bar" })
         }.to output(/Expected an Exception or a String, got: 312/).to_stdout

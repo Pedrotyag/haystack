@@ -2,7 +2,7 @@
 
 require "set"
 
-module Sentry
+module Haystack
   class ExceptionInterface < Interface
     # @return [<Array[SingleExceptionInterface]>]
     attr_reader :values
@@ -27,7 +27,7 @@ module Sentry
     # @param mechanism [Mechanism]
     # @return [ExceptionInterface]
     def self.build(exception:, stacktrace_builder:, mechanism:)
-      exceptions = Sentry::Utils::ExceptionCauseChain.exception_to_array(exception).reverse
+      exceptions = Haystack::Utils::ExceptionCauseChain.exception_to_array(exception).reverse
       processed_backtrace_ids = Set.new
 
       exceptions = exceptions.map do |e|

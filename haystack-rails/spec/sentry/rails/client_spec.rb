@@ -2,9 +2,9 @@
 
 require "spec_helper"
 
-RSpec.describe Sentry::Client, type: :request, retry: 3, skip: Gem::Version.new(Rails.version) < Gem::Version.new('5.1.0') do
+RSpec.describe Haystack::Client, type: :request, retry: 3, skip: Gem::Version.new(Rails.version) < Gem::Version.new('5.1.0') do
   let(:transport) do
-    Sentry.get_current_client.transport
+    Haystack.get_current_client.transport
   end
 
   let(:expected_initial_active_record_connections_count) do
@@ -21,7 +21,7 @@ RSpec.describe Sentry::Client, type: :request, retry: 3, skip: Gem::Version.new(
 
   def send_events
     5.times.map do
-      Thread.new { Sentry::Rails.capture_message("msg") }
+      Thread.new { Haystack::Rails.capture_message("msg") }
     end.join
   end
 

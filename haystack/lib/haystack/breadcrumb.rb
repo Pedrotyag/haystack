@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Sentry
+module Haystack
   class Breadcrumb
     DATA_SERIALIZATION_ERROR_MESSAGE = "[data were removed due to serialization issues]"
 
@@ -26,7 +26,7 @@ module Sentry
     def initialize(category: nil, data: nil, message: nil, timestamp: nil, level: nil, type: nil)
       @category = category
       @data = data || {}
-      @timestamp = timestamp || Sentry.utc_now.to_i
+      @timestamp = timestamp || Haystack.utc_now.to_i
       @type = type
       self.message = message
       self.level = level
@@ -52,7 +52,7 @@ module Sentry
 
     # @param level [String]
     # @return [void]
-    def level=(level) # needed to meet the Sentry spec
+    def level=(level) # needed to meet the Haystack spec
       @level = level == "warn" ? "warning" : level
     end
 
@@ -62,7 +62,7 @@ module Sentry
       begin
         ::JSON.parse(::JSON.generate(@data))
       rescue Exception => e
-        Sentry.logger.debug(LOGGER_PROGNAME) do
+        Haystack.logger.debug(LOGGER_PROGNAME) do
           <<~MSG
 can't serialize breadcrumb data because of error: #{e}
 data: #{@data}

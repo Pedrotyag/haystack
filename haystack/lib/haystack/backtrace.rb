@@ -2,7 +2,7 @@
 
 require "rubygems"
 
-module Sentry
+module Haystack
   # @api private
   class Backtrace
     # Handles backtrace parsing line by line

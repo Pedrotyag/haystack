@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Sentry
+module Haystack
   class StacktraceBuilder
     # @return [String]
     attr_reader :project_root

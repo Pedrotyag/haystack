@@ -9,7 +9,7 @@ require "active_job/railtie"
 require "action_view/railtie"
 require "action_controller/railtie"
 
-require 'sentry/rails'
+require 'haystack/rails'
 
 ActiveRecord::Base.logger = Logger.new(nil)
 ActiveRecord::Base.establish_connection(adapter: "sqlite3", database: "db")
@@ -87,11 +87,11 @@ def make_basic_app(&block)
     root to: "hello#world"
   end
 
-  app.initializer :configure_sentry do
-    Sentry.init do |config|
+  app.initializer :configure_haystack do
+    Haystack.init do |config|
       config.release = 'beta'
-      config.dsn = "http://12345:67890@sentry.localdomain:3000/sentry/42"
-      config.transport.transport_class = Sentry::DummyTransport
+      config.dsn = "http://12345:67890@haystack.localdomain:3000/haystack/42"
+      config.transport.transport_class = Haystack::DummyTransport
       # for sending events synchronously
       config.background_worker_threads = 0
       config.capture_exception_frame_locals = true
@@ -109,7 +109,7 @@ def make_basic_app(&block)
   Post.all.to_a # to run the sqlte version query first
 
   # and then clear breadcrumbs in case the above query is recorded
-  Sentry.get_current_scope.clear_breadcrumbs if Sentry.initialized?
+  Haystack.get_current_scope.clear_breadcrumbs if Haystack.initialized?
 
   app
 end

@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-# for https://github.com/getsentry/sentry-ruby/issues/1249
+# for https://github.com/gethaystack/haystack/issues/1249
 require "active_job/railtie"
 # Rails 7.2 added HealthCheckController, which requires ActionController
 require "action_controller/railtie"
 require "active_support/all"
-require "sentry/rails"
+require "haystack/rails"
 require "minitest/autorun"
 
 class TestApp < Rails::Application
@@ -46,10 +46,10 @@ app.initializer :eager_load! do
 end
 
 app.config.eager_load = true
-app.initializer :sentry do
-  Sentry.init do |config|
+app.initializer :haystack do
+  Haystack.init do |config|
     config.logger = Logger.new(nil)
-    config.dsn = 'https://2fb45f003d054a7ea47feb45898f7649@o447951.ingest.sentry.io/5434472'
+    config.dsn = 'https://2fb45f003d054a7ea47feb45898f7649@o447951.ingest.haystack.io/5434472'
     config.background_worker_threads = 0
   end
 end

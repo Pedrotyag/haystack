@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Sentry
+module Haystack
   module Metrics
     class DistributionMetric < Metric
       attr_reader :value

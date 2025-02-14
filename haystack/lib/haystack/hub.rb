@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-require "sentry/scope"
-require "sentry/client"
-require "sentry/session"
+require "haystack/scope"
+require "haystack/client"
+require "haystack/session"
 
-module Sentry
+module Haystack
   class Hub
     include ArgumentCheckingHelper
 
@@ -82,7 +82,7 @@ module Sentry
       end
     end
 
-    def start_transaction(transaction: nil, custom_sampling_context: {}, instrumenter: :sentry, **options)
+    def start_transaction(transaction: nil, custom_sampling_context: {}, instrumenter: :haystack, **options)
       return unless configuration.tracing_enabled?
       return unless instrumenter == configuration.instrumenter
 
@@ -101,7 +101,7 @@ module Sentry
       transaction
     end
 
-    def with_child_span(instrumenter: :sentry, **attributes, &block)
+    def with_child_span(instrumenter: :haystack, **attributes, &block)
       return yield(nil) unless instrumenter == configuration.instrumenter
 
       current_span = current_scope.get_span
@@ -128,7 +128,7 @@ module Sentry
         check_argument_type!(exception, ::Exception)
       end
 
-      return if Sentry.exception_captured?(exception)
+      return if Haystack.exception_captured?(exception)
 
       return unless current_client
 
@@ -143,7 +143,7 @@ module Sentry
 
       capture_event(event, **options, &block).tap do
         # mark the exception as captured so we can use this information to avoid duplicated capturing
-        exception.instance_variable_set(Sentry::CAPTURED_SIGNATURE, true)
+        exception.instance_variable_set(Haystack::CAPTURED_SIGNATURE, true)
       end
     end
 
@@ -164,7 +164,7 @@ module Sentry
 
     def capture_check_in(slug, status, **options)
       check_argument_type!(slug, ::String)
-      check_argument_includes!(status, Sentry::CheckInEvent::VALID_STATUSES)
+      check_argument_includes!(status, Haystack::CheckInEvent::VALID_STATUSES)
 
       return unless current_client
 
@@ -187,7 +187,7 @@ module Sentry
     end
 
     def capture_event(event, **options, &block)
-      check_argument_type!(event, Sentry::Event)
+      check_argument_type!(event, Haystack::Event)
 
       return unless current_client
 
@@ -215,7 +215,7 @@ module Sentry
         configuration.log_debug(event.to_json_compatible)
       end
 
-      @last_event_id = event&.event_id if event.is_a?(Sentry::ErrorEvent)
+      @last_event_id = event&.event_id if event.is_a?(Haystack::ErrorEvent)
       event
     end
 
@@ -257,9 +257,9 @@ module Sentry
       session.close
 
       # NOTE: Under some circumstances, session_flusher nilified out of sync
-      #   See: https://github.com/getsentry/sentry-ruby/issues/2378
-      #   See: https://github.com/getsentry/sentry-ruby/pull/2396
-      Sentry.session_flusher&.add_session(session)
+      #   See: https://github.com/gethaystack/haystack/issues/2378
+      #   See: https://github.com/gethaystack/haystack/pull/2396
+      Haystack.session_flusher&.add_session(session)
     end
 
     def with_session_tracking(&block)
@@ -274,7 +274,7 @@ module Sentry
     def get_traceparent
       return nil unless current_scope
 
-      current_scope.get_span&.to_sentry_trace ||
+      current_scope.get_span&.to_haystack_trace ||
         current_scope.propagation_context.get_traceparent
     end
 
@@ -289,7 +289,7 @@ module Sentry
       headers = {}
 
       traceparent = get_traceparent
-      headers[SENTRY_TRACE_HEADER_NAME] = traceparent if traceparent
+      headers[HAYSTACK_TRACE_HEADER_NAME] = traceparent if traceparent
 
       baggage = get_baggage
       headers[BAGGAGE_HEADER_NAME] = baggage if baggage && !baggage.empty?

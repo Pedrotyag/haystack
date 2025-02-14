@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Sentry
+module Haystack
   module Utils
     module EnvHelper
       TRUTHY_ENV_VALUES = %w[t true yes y 1 on].freeze

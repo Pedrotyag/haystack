@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require "sentry/rails/tracing/abstract_subscriber"
+require "haystack/rails/tracing/abstract_subscriber"
 
-module Sentry
+module Haystack
   module Rails
     module Tracing
       class ActiveRecordSubscriber < AbstractSubscriber
@@ -15,14 +15,14 @@ module Sentry
 
         if SUPPORT_SOURCE_LOCATION
           class_attribute :backtrace_cleaner, default: (ActiveSupport::BacktraceCleaner.new.tap do |cleaner|
-            cleaner.add_silencer { |line| line.include?("sentry-ruby/lib") || line.include?("sentry-rails/lib") }
+            cleaner.add_silencer { |line| line.include?("haystack-ruby/lib") || line.include?("haystack-rails/lib") }
           end)
         end
 
         class << self
           def subscribe!
-            record_query_source = SUPPORT_SOURCE_LOCATION && Sentry.configuration.rails.enable_db_query_source
-            query_source_threshold = Sentry.configuration.rails.db_query_source_threshold_ms
+            record_query_source = SUPPORT_SOURCE_LOCATION && Haystack.configuration.rails.enable_db_query_source
+            query_source_threshold = Haystack.configuration.rails.db_query_source_threshold_ms
 
             subscribe_to_event(EVENT_NAMES) do |event_name, duration, payload|
               next if EXCLUDED_EVENTS.include? payload[:name]
@@ -70,7 +70,7 @@ module Sentry
                 source_location = query_source_location
 
                 if source_location
-                  backtrace_line = Sentry::Backtrace::Line.parse(source_location)
+                  backtrace_line = Haystack::Backtrace::Line.parse(source_location)
 
                   span.set_data(Span::DataConventions::FILEPATH, backtrace_line.file) if backtrace_line.file
                   span.set_data(Span::DataConventions::LINENO, backtrace_line.number) if backtrace_line.number
@@ -93,7 +93,7 @@ module Sentry
               nil
             end
           else
-            # Since Sentry is mostly used in production, we don't want to fallback to the slower implementation
+            # Since Haystack is mostly used in production, we don't want to fallback to the slower implementation
             # and adds potentially big overhead to the application.
             def query_source_location
               nil

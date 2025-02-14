@@ -3,7 +3,7 @@
 require "securerandom"
 require_relative "profiler/helpers"
 
-module Sentry
+module Haystack
   class Profiler
     include Profiler::Helpers
 
@@ -192,11 +192,11 @@ module Sentry
     private
 
     def log(message)
-      Sentry.logger.debug(LOGGER_PROGNAME) { "[Profiler] #{message}" }
+      Haystack.logger.debug(LOGGER_PROGNAME) { "[Profiler] #{message}" }
     end
 
     def record_lost_event(reason)
-      Sentry.get_current_client&.transport&.record_lost_event(reason, "profile")
+      Haystack.get_current_client&.transport&.record_lost_event(reason, "profile")
     end
   end
 end

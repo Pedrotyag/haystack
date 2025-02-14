@@ -3,7 +3,7 @@
 require "set"
 require "zlib"
 
-module Sentry
+module Haystack
   module Metrics
     class SetMetric < Metric
       attr_reader :value

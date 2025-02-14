@@ -2,4 +2,4 @@
 
 require "rack"
 
-require "sentry/rack/capture_exceptions"
+require "haystack/rack/capture_exceptions"

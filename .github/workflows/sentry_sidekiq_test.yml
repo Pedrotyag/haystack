@@ -1,4 +1,4 @@
-name: sentry-sidekiq Test
+name: haystack-sidekiq Test
 
 on:
   workflow_dispatch:
@@ -16,12 +16,12 @@ jobs:
   test:
     defaults:
       run:
-        working-directory: sentry-sidekiq
+        working-directory: haystack-sidekiq
     name: Ruby ${{ matrix.ruby_version }} & Sidekiq ${{ matrix.sidekiq_version }}, options - ${{ toJson(matrix.options) }}
     runs-on: ubuntu-latest
     env:
       RUBYOPT: ${{ matrix.options.rubyopt }}
-      BUNDLE_GEMFILE: ${{ github.workspace }}/sentry-sidekiq/Gemfile
+      BUNDLE_GEMFILE: ${{ github.workspace }}/haystack-sidekiq/Gemfile
       BUNDLE_WITHOUT: rubocop
       SIDEKIQ_VERSION: ${{ matrix.sidekiq_version }}
     strategy:

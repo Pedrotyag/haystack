@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Sentry
+module Haystack
   class StacktraceInterface
     # @return [<Array[Frame]>]
     attr_reader :frames

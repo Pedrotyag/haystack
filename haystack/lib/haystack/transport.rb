@@ -1,15 +1,15 @@
 # frozen_string_literal: true
 
 require "json"
-require "sentry/envelope"
+require "haystack/envelope"
 
-module Sentry
+module Haystack
   class Transport
     PROTOCOL_VERSION = "7"
-    USER_AGENT = "sentry-ruby/#{Sentry::VERSION}"
+    USER_AGENT = "haystack/#{Haystack::VERSION}"
     CLIENT_REPORT_INTERVAL = 30
 
-    # https://develop.sentry.dev/sdk/client-reports/#envelope-item-payload
+    # https://develop.haystack.dev/sdk/client-reports/#envelope-item-payload
     CLIENT_REPORT_REASONS = [
       :ratelimit_backoff,
       :queue_overflow,
@@ -26,7 +26,7 @@ module Sentry
 
     attr_reader :rate_limits, :discarded_events, :last_client_report_sent
 
-    # @deprecated Use Sentry.logger to retrieve the current logger instead.
+    # @deprecated Use Haystack.logger to retrieve the current logger instead.
     attr_reader :logger
 
     def initialize(configuration)
@@ -61,7 +61,7 @@ module Sentry
       data, serialized_items = serialize_envelope(envelope)
 
       if data
-        log_debug("[Transport] Sending envelope with items [#{serialized_items.map(&:type).join(', ')}] #{envelope.event_id} to Sentry")
+        log_debug("[Transport] Sending envelope with items [#{serialized_items.map(&:type).join(', ')}] #{envelope.event_id} to Farmer")
         send_data(data)
       end
     end
@@ -123,8 +123,8 @@ module Sentry
       envelope_headers = {
         event_id: event_id,
         dsn: @dsn.to_s,
-        sdk: Sentry.sdk_meta,
-        sent_at: Sentry.utc_now.iso8601
+        sdk: Haystack.sdk_meta,
+        sent_at: Haystack.utc_now.iso8601
       }
 
       if event.is_a?(Event) && event.dynamic_sampling_context
@@ -187,7 +187,7 @@ module Sentry
 
       item_header = { type: "client_report" }
       item_payload = {
-        timestamp: Sentry.utc_now.iso8601,
+        timestamp: Haystack.utc_now.iso8601,
         discarded_events: discarded_events_hash
       }
 
@@ -212,6 +212,6 @@ module Sentry
   end
 end
 
-require "sentry/transport/dummy_transport"
-require "sentry/transport/http_transport"
-require "sentry/transport/spotlight_transport"
+require "haystack/transport/dummy_transport"
+require "haystack/transport/http_transport"
+require "haystack/transport/spotlight_transport"

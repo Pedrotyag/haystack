@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Sentry
+module Haystack
   module LoggingHelper
     def log_error(message, exception, debug: false)
       message = "#{message}: #{exception.message}"

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Sentry
+module Haystack
   module Rails
     module Tracing
       class AbstractSubscriber
@@ -41,7 +41,7 @@ module Sentry
           def record_on_current_span(duration:, **options)
             return unless options[:start_timestamp]
 
-            Sentry.with_child_span(**options) do |child_span|
+            Haystack.with_child_span(**options) do |child_span|
               # duration in ActiveSupport is computed in millisecond
               # so we need to covert it as second before calculating the timestamp
               child_span.set_timestamp(child_span.start_timestamp + duration / 1000)

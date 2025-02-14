@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Sentry
+module Haystack
   module Excon
     OP_NAME = "http.client"
 
@@ -28,10 +28,10 @@ module Sentry
       include Utils::HttpTracing
 
       def start_transaction(env)
-        return unless Sentry.initialized?
+        return unless Haystack.initialized?
 
-        current_span = Sentry.get_current_scope&.span
-        @span = current_span&.start_child(op: OP_NAME, start_timestamp: Sentry.utc_now.to_f, origin: SPAN_ORIGIN)
+        current_span = Haystack.get_current_scope&.span
+        @span = current_span&.start_child(op: OP_NAME, start_timestamp: Haystack.utc_now.to_f, origin: SPAN_ORIGIN)
 
         request_info = extract_request_info(env)
 
@@ -46,8 +46,8 @@ module Sentry
         response_status = response[:response][:status]
         request_info = extract_request_info(response)
 
-        if record_sentry_breadcrumb?
-          record_sentry_breadcrumb(request_info, response_status)
+        if record_haystack_breadcrumb?
+          record_haystack_breadcrumb(request_info, response_status)
         end
 
         set_span_info(@span, request_info, response_status)
@@ -61,7 +61,7 @@ module Sentry
         url = env[:scheme] + "://" + env[:hostname] + env[:path]
         result = { method: env[:method].to_s.upcase, url: url }
 
-        if Sentry.configuration.send_default_pii
+        if Haystack.configuration.send_default_pii
           result[:query] = env[:query]
 
           # Handle excon 1.0.0+

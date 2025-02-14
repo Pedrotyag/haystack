@@ -4,32 +4,32 @@ require "English"
 require "forwardable"
 require "time"
 
-require "sentry/version"
-require "sentry/exceptions"
-require "sentry/core_ext/object/deep_dup"
-require "sentry/utils/argument_checking_helper"
-require "sentry/utils/encoding_helper"
-require "sentry/utils/logging_helper"
-require "sentry/configuration"
-require "sentry/logger"
-require "sentry/event"
-require "sentry/error_event"
-require "sentry/transaction_event"
-require "sentry/check_in_event"
-require "sentry/span"
-require "sentry/transaction"
-require "sentry/hub"
-require "sentry/background_worker"
-require "sentry/threaded_periodic_worker"
-require "sentry/session_flusher"
-require "sentry/backpressure_monitor"
-require "sentry/cron/monitor_check_ins"
-require "sentry/metrics"
-require "sentry/vernier/profiler"
+require "haystack/version"
+require "haystack/exceptions"
+require "haystack/core_ext/object/deep_dup"
+require "haystack/utils/argument_checking_helper"
+require "haystack/utils/encoding_helper"
+require "haystack/utils/logging_helper"
+require "haystack/configuration"
+require "haystack/logger"
+require "haystack/event"
+require "haystack/error_event"
+require "haystack/transaction_event"
+require "haystack/check_in_event"
+require "haystack/span"
+require "haystack/transaction"
+require "haystack/hub"
+require "haystack/background_worker"
+require "haystack/threaded_periodic_worker"
+require "haystack/session_flusher"
+require "haystack/backpressure_monitor"
+require "haystack/cron/monitor_check_ins"
+require "haystack/metrics"
+require "haystack/vernier/profiler"
 
 [
-  "sentry/rake",
-  "sentry/rack"
+  "haystack/rake",
+  "haystack/rack"
 ].each do |lib|
   begin
     require lib
@@ -37,18 +37,18 @@ require "sentry/vernier/profiler"
   end
 end
 
-module Sentry
-  META = { "name" => "sentry.ruby", "version" => Sentry::VERSION }.freeze
+module Haystack
+  META = { "name" => "haystack.ruby", "version" => Haystack::VERSION }.freeze
 
-  CAPTURED_SIGNATURE = :@__sentry_captured
+  CAPTURED_SIGNATURE = :@__haystack_captured
 
-  LOGGER_PROGNAME = "sentry"
+  LOGGER_PROGNAME = "haystack"
 
-  SENTRY_TRACE_HEADER_NAME = "sentry-trace"
+  HAYSTACK_TRACE_HEADER_NAME = "haystack-trace"
 
   BAGGAGE_HEADER_NAME = "baggage"
 
-  THREAD_LOCAL = :sentry_hub
+  THREAD_LOCAL = :haystack_hub
 
   MUTEX = Mutex.new
 
@@ -59,14 +59,14 @@ module Sentry
         exception = tp.raised_exception
 
         # don't collect locals again if the exception is re-raised
-        next if exception.instance_variable_get(:@sentry_locals)
+        next if exception.instance_variable_get(:@haystack_locals)
         next unless tp.binding
 
         locals = tp.binding.local_variables.each_with_object({}) do |local, result|
           result[local] = tp.binding.local_variable_get(local)
         end
 
-        exception.instance_variable_set(:@sentry_locals, locals)
+        exception.instance_variable_set(:@haystack_locals, locals)
       end
     end
 
@@ -137,7 +137,7 @@ module Sentry
         end
       end
 
-      meta = { name: "sentry.ruby.#{name}", version: version }.freeze
+      meta = { name: "haystack.ruby.#{name}", version: version }.freeze
       integrations[name.to_s] = meta
     end
 
@@ -149,7 +149,7 @@ module Sentry
     #   The Configuration object that's used for configuring the client and its transport.
     #   @return [Configuration]
     # @!macro [new] send_event
-    #   Sends the event to Sentry.
+    #   Sends the event to Haystack.
     #   @param event [Event] the event to be sent.
     #   @param hint [Hash] the hint data that'll be passed to `before_send` callback.
     #   @return [Event]
@@ -237,10 +237,11 @@ module Sentry
       hub = Hub.new(client, scope)
       Thread.current.thread_variable_set(THREAD_LOCAL, hub)
       @main_hub = hub
-      @background_worker = Sentry::BackgroundWorker.new(config)
-      @session_flusher = config.session_tracking? ? Sentry::SessionFlusher.new(config, client) : nil
-      @backpressure_monitor = config.enable_backpressure_handling ? Sentry::BackpressureMonitor.new(config, client) : nil
-      @metrics_aggregator = config.metrics.enabled ? Sentry::Metrics::Aggregator.new(config, client) : nil
+      @global_configuration = config
+      @background_worker = Haystack::BackgroundWorker.new(config)
+      @session_flusher = config.session_tracking? ? Haystack::SessionFlusher.new(config, client) : nil
+      @backpressure_monitor = config.enable_backpressure_handling ? Haystack::BackpressureMonitor.new(config, client) : nil
+      @metrics_aggregator = config.metrics.enabled ? Haystack::Metrics::Aggregator.new(config, client) : nil
       exception_locals_tp.enable if config.include_local_variables
       at_exit { close }
     end
@@ -291,7 +292,7 @@ module Sentry
     end
 
     # Returns an uri for security policy reporting that's generated from the given DSN
-    # (To learn more about security policy reporting: https://docs.sentry.io/product/security-policy-reporting/)
+    # (To learn more about security policy reporting: https://docs.haystack.io/product/security-policy-reporting/)
     #
     # It returns nil if
     # - The SDK is not initialized yet.
@@ -310,7 +311,7 @@ module Sentry
       MUTEX.synchronize { @main_hub }
     end
 
-    # Takes an instance of Sentry::Breadcrumb and stores it to the current active scope.
+    # Takes an instance of Haystack::Breadcrumb and stores it to the current active scope.
     #
     # @return [Breadcrumb, nil]
     def add_breadcrumb(breadcrumb, **options)
@@ -358,11 +359,11 @@ module Sentry
     # Takes a block and yields the current active scope.
     #
     # @example
-    #   Sentry.configure_scope do |scope|
+    #   Haystack.configure_scope do |scope|
     #     scope.set_tags(foo: "bar")
     #   end
     #
-    #   Sentry.capture_message("test message") # this event will have tags { foo: "bar" }
+    #   Haystack.capture_message("test message") # this event will have tags { foo: "bar" }
     #
     # @yieldparam scope [Scope]
     # @return [void]
@@ -376,18 +377,18 @@ module Sentry
     # scope inside the block.
     #
     # @example
-    #   Sentry.configure_scope do |scope|
+    #   Haystack.configure_scope do |scope|
     #     scope.set_tags(foo: "bar")
     #   end
     #
-    #   Sentry.capture_message("test message") # this event will have tags { foo: "bar" }
+    #   Haystack.capture_message("test message") # this event will have tags { foo: "bar" }
     #
-    #   Sentry.with_scope do |temp_scope|
+    #   Haystack.with_scope do |temp_scope|
     #     temp_scope.set_tags(foo: "baz")
-    #     Sentry.capture_message("test message 2") # this event will have tags { foo: "baz" }
+    #     Haystack.capture_message("test message 2") # this event will have tags { foo: "baz" }
     #   end
     #
-    #   Sentry.capture_message("test message 3") # this event will have tags { foo: "bar" }
+    #   Haystack.capture_message("test message 3") # this event will have tags { foo: "bar" }
     #
     # @yieldparam scope [Scope]
     # @return [void]
@@ -401,14 +402,14 @@ module Sentry
     # around this block and flushed every minute.
     #
     # @example
-    #   Sentry.with_session_tracking do
+    #   Haystack.with_session_tracking do
     #     a = 1 + 1 # new session recorded with :exited status
     #   end
     #
-    #   Sentry.with_session_tracking do
+    #   Haystack.with_session_tracking do
     #     1 / 0
     #   rescue => e
-    #     Sentry.capture_exception(e) # new session recorded with :errored status
+    #     Haystack.capture_exception(e) # new session recorded with :errored status
     #   end
     # @return [void]
     def with_session_tracking(&block)
@@ -416,7 +417,7 @@ module Sentry
       get_current_hub.with_session_tracking(&block)
     end
 
-    # Takes an exception and reports it to Sentry via the currently active hub.
+    # Takes an exception and reports it to Haystack via the currently active hub.
     #
     # @yieldparam scope [Scope]
     # @return [Event, nil]
@@ -425,15 +426,15 @@ module Sentry
       get_current_hub.capture_exception(exception, **options, &block)
     end
 
-    # Takes a block and evaluates it. If the block raised an exception, it reports the exception to Sentry and re-raises it.
+    # Takes a block and evaluates it. If the block raised an exception, it reports the exception to Haystack and re-raises it.
     # If the block ran without exception, it returns the evaluation result.
     #
     # @example
-    #   Sentry.with_exception_captured do
+    #   Haystack.with_exception_captured do
     #     1/1 #=> 1 will be returned
     #   end
     #
-    #   Sentry.with_exception_captured do
+    #   Haystack.with_exception_captured do
     #     1/0 #=> ZeroDivisionError will be reported and re-raised
     #   end
     #
@@ -444,7 +445,7 @@ module Sentry
       raise
     end
 
-    # Takes a message string and reports it to Sentry via the currently active hub.
+    # Takes a message string and reports it to Haystack via the currently active hub.
     #
     # @yieldparam scope [Scope]
     # @return [Event, nil]
@@ -453,7 +454,7 @@ module Sentry
       get_current_hub.capture_message(message, **options, &block)
     end
 
-    # Takes an instance of Sentry::Event and dispatches it to the currently active hub.
+    # Takes an instance of Haystack::Event and dispatches it to the currently active hub.
     #
     # @return [Event, nil]
     def capture_event(event)
@@ -461,7 +462,7 @@ module Sentry
       get_current_hub.capture_event(event)
     end
 
-    # Captures a check-in and sends it to Sentry via the currently active hub.
+    # Captures a check-in and sends it to Haystack via the currently active hub.
     #
     # @param slug [String] identifier of this monitor
     # @param status [Symbol] status of this check-in, one of {CheckInEvent::VALID_STATUSES}
@@ -477,7 +478,7 @@ module Sentry
       get_current_hub.capture_check_in(slug, status, **options)
     end
 
-    # Takes or initializes a new Sentry::Transaction and makes a sampling decision for it.
+    # Takes or initializes a new Haystack::Transaction and makes a sampling decision for it.
     #
     # @return [Transaction, nil]
     def start_transaction(**options)
@@ -492,18 +493,18 @@ module Sentry
     # @return yield result
     #
     # @example
-    #   Sentry.with_child_span(op: "my operation") do |child_span|
+    #   Haystack.with_child_span(op: "my operation") do |child_span|
     #     child_span.set_data(operation_data)
     #     child_span.set_description(operation_detail)
     #     # result will be returned
     #   end
     #
     def with_child_span(**attributes, &block)
-      return yield(nil) unless Sentry.initialized?
+      return yield(nil) unless Haystack.initialized?
       get_current_hub.with_child_span(**attributes, &block)
     end
 
-    # Returns the id of the lastly reported Sentry::Event.
+    # Returns the id of the lastly reported Haystack::Event.
     #
     # @return [String, nil]
     def last_event_id
@@ -527,7 +528,7 @@ module Sentry
     # @return [void]
     #
     # @example
-    #   Sentry.add_global_event_processor do |event, hint|
+    #   Haystack.add_global_event_processor do |event, hint|
     #     event.tags = { foo: 42 }
     #     event
     #   end
@@ -536,7 +537,7 @@ module Sentry
       Scope.add_global_event_processor(&block)
     end
 
-    # Returns the traceparent (sentry-trace) header for distributed tracing.
+    # Returns the traceparent (haystack-trace) header for distributed tracing.
     # Can be either from the currently active span or the propagation context.
     #
     # @return [String, nil]
@@ -554,7 +555,7 @@ module Sentry
       get_current_hub.get_baggage
     end
 
-    # Returns the a Hash containing sentry-trace and baggage.
+    # Returns the a Hash containing haystack-trace and baggage.
     # Can be either from the currently active span or the propagation context.
     #
     # @return [Hash, nil]
@@ -563,7 +564,7 @@ module Sentry
       get_current_hub.get_trace_propagation_headers
     end
 
-    # Returns the a Hash containing sentry-trace and baggage.
+    # Returns the a Hash containing haystack-trace and baggage.
     # Can be either from the currently active span or the propagation context.
     #
     # @return [String]
@@ -609,9 +610,9 @@ module Sentry
 end
 
 # patches
-require "sentry/net/http"
-require "sentry/redis"
-require "sentry/puma"
-require "sentry/graphql"
-require "sentry/faraday"
-require "sentry/excon"
+require "haystack/net/http"
+require "haystack/redis"
+require "haystack/puma"
+require "haystack/graphql"
+require "haystack/faraday"
+require "haystack/excon"

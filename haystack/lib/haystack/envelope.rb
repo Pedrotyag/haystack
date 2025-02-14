@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Sentry
+module Haystack
   # @api private
   class Envelope
     attr_accessor :headers, :items

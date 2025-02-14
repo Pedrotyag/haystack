@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require "sentry/rails/instrument_payload_cleanup_helper"
+require "haystack/rails/instrument_payload_cleanup_helper"
 
-module Sentry
+module Haystack
   module Rails
     module Breadcrumb
       module MonotonicActiveSupportLogger
@@ -19,12 +19,12 @@ module Sentry
               cleanup_data(data)
             end
 
-            crumb = Sentry::Breadcrumb.new(
+            crumb = Haystack::Breadcrumb.new(
               data: data,
               category: name,
               timestamp: started.to_i
             )
-            Sentry.add_breadcrumb(crumb)
+            Haystack.add_breadcrumb(crumb)
           end
 
           def inject

@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-module Sentry
+module Haystack
   module Rails
     module Overrides
       module StreamingReporter
         def log_error(exception)
-          Sentry::Rails.capture_exception(exception)
+          Haystack::Rails.capture_exception(exception)
           super
         end
       end
@@ -16,7 +16,7 @@ module Sentry
         end
 
         def log_error_with_raven(exception)
-          Sentry::Rails.capture_exception(exception)
+          Haystack::Rails.capture_exception(exception)
           log_error_without_raven(exception)
         end
       end

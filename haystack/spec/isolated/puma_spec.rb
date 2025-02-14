@@ -52,7 +52,7 @@ RSpec.describe Puma::Server do
       server.send_http_and_read("GET / HTTP/1.0\r\n\r\n")
     end
     expect(res).to match(/500 Internal Server Error/)
-    events = sentry_events
+    events = haystack_events
     expect(events.count).to eq(1)
     event = events.first
     expect(event.exception.values.first.value).to match("foo")
@@ -74,7 +74,7 @@ RSpec.describe Puma::Server do
 
       expect(res).to match(/500 Internal Server Error/)
       expect(handler_executed).to eq(true)
-      events = sentry_events
+      events = haystack_events
       expect(events.count).to eq(1)
       event = events.first
       expect(event.exception.values.first.value).to match("foo")
@@ -91,12 +91,12 @@ RSpec.describe Puma::Server do
         end
 
         expect(res).to match(/500 Internal Server Error/)
-        events = sentry_events
+        events = haystack_events
         expect(events.count).to eq(0)
       end
 
       it "captures #{error_class} when it is removed from the SDK's config.excluded_exceptions" do
-        Sentry.configuration.excluded_exceptions.delete(error_class.name)
+        Haystack.configuration.excluded_exceptions.delete(error_class.name)
 
         app = proc { raise error_class.new("foo") }
 
@@ -105,7 +105,7 @@ RSpec.describe Puma::Server do
         end
 
         expect(res).to match(/500 Internal Server Error/)
-        events = sentry_events
+        events = haystack_events
         expect(events.count).to eq(1)
         event = events.first
         expect(event.exception.values.first.type).to match(error_class.name)
@@ -114,16 +114,16 @@ RSpec.describe Puma::Server do
     end
   end
 
-  context "when Sentry.capture_exception causes error" do
+  context "when Haystack.capture_exception causes error" do
     it "doesn't affect the response" do
-      expect(Sentry).to receive(:capture_exception).and_raise("bar")
+      expect(Haystack).to receive(:capture_exception).and_raise("bar")
 
       res = server_run(app) do |server|
         server.send_http_and_read("GET / HTTP/1.0\r\n\r\n")
       end
 
       expect(res).to match(/500 Internal Server Error/)
-      expect(sentry_events).to be_empty
+      expect(haystack_events).to be_empty
     end
   end
 end

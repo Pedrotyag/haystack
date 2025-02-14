@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require "sentry/utils/exception_cause_chain"
+require "haystack/utils/exception_cause_chain"
 
-module Sentry
+module Haystack
   class SingleExceptionInterface < Interface
     include CustomInspection
 
@@ -44,7 +44,7 @@ module Sentry
     def self.build_with_stacktrace(exception:, stacktrace_builder:, mechanism:)
       stacktrace = stacktrace_builder.build(backtrace: exception.backtrace)
 
-      if locals = exception.instance_variable_get(:@sentry_locals)
+      if locals = exception.instance_variable_get(:@haystack_locals)
         locals.each do |k, v|
           locals[k] =
             begin

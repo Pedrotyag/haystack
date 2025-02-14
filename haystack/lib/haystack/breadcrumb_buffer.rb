@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require "sentry/breadcrumb"
+require "haystack/breadcrumb"
 
-module Sentry
+module Haystack
   class BreadcrumbBuffer
     DEFAULT_SIZE = 100
     include Enumerable

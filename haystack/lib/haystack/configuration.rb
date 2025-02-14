@@ -2,18 +2,18 @@
 
 require "concurrent/utility/processor_counter"
 
-require "sentry/utils/exception_cause_chain"
-require "sentry/utils/custom_inspection"
-require "sentry/utils/env_helper"
-require "sentry/dsn"
-require "sentry/release_detector"
-require "sentry/transport/configuration"
-require "sentry/cron/configuration"
-require "sentry/metrics/configuration"
-require "sentry/linecache"
-require "sentry/interfaces/stacktrace_builder"
+require "haystack/utils/exception_cause_chain"
+require "haystack/utils/custom_inspection"
+require "haystack/utils/env_helper"
+require "haystack/dsn"
+require "haystack/release_detector"
+require "haystack/transport/configuration"
+require "haystack/cron/configuration"
+require "haystack/metrics/configuration"
+require "haystack/linecache"
+require "haystack/interfaces/stacktrace_builder"
 
-module Sentry
+module Haystack
   class Configuration
     include CustomInspection
     include LoggingHelper
@@ -29,13 +29,13 @@ module Sentry
     attr_accessor :app_dirs_pattern
 
     # Provide an object that responds to `call` to send events asynchronously.
-    # E.g.: lambda { |event| Thread.new { Sentry.send_event(event) } }
+    # E.g.: lambda { |event| Thread.new { Haystack.send_event(event) } }
     #
-    # @deprecated It will be removed in the next major release. Please read https://github.com/getsentry/sentry-ruby/issues/1522 for more information
+    # @deprecated It will be removed in the next major release. Please read https://github.com/gethaystack/haystack/issues/1522 for more information
     # @return [Proc, nil]
     attr_reader :async
 
-    # to send events in a non-blocking way, sentry-ruby has its own background worker
+    # to send events in a non-blocking way, haystack has its own background worker
     # by default, the worker holds a thread pool that has [the number of processors] threads
     # but you can configure it with this configuration option
     # E.g.: config.background_worker_threads = 5
@@ -100,11 +100,11 @@ module Sentry
     attr_reader :before_send_transaction
 
     # An array of breadcrumbs loggers to be used. Available options are:
-    # - :sentry_logger
+    # - :haystack_logger
     # - :http_logger
     # - :redis_logger
     #
-    # And if you also use sentry-rails:
+    # And if you also use haystack-rails:
     # - :active_support_logger
     # - :monotonic_active_support_logger
     #
@@ -128,11 +128,11 @@ module Sentry
     # @return [Boolean]
     attr_accessor :debug
 
-    # the dsn value, whether it's set via `config.dsn=` or `ENV["SENTRY_DSN"]`
+    # the dsn value, whether it's set via `config.dsn=` or `ENV["HAYSTACK_DSN"]`
     # @return [String]
     attr_reader :dsn
 
-    # Whitelist of enabled_environments that will send notifications to Sentry. Array of Strings.
+    # Whitelist of enabled_environments that will send notifications to Haystack. Array of Strings.
     # @return [Array<String>]
     attr_accessor :enabled_environments
 
@@ -155,7 +155,7 @@ module Sentry
     attr_accessor :include_local_variables
 
     # Whether to capture events and traces into Spotlight. Default is false.
-    # If you set this to true, Sentry will send events and traces to the local
+    # If you set this to true, Haystack will send events and traces to the local
     # Sidecar proxy at http://localhost:8969/stream.
     # If you want to use a different Sidecar proxy address, set this to String
     # with the proxy URL.
@@ -180,8 +180,8 @@ module Sentry
     # @return [LineCache]
     attr_accessor :linecache
 
-    # Logger used by Sentry. In Rails, this is the Rails logger, otherwise
-    # Sentry provides its own Sentry::Logger.
+    # Logger used by Haystack. In Rails, this is the Rails logger, otherwise
+    # Haystack provides its own Haystack::Logger.
     # @return [Logger]
     attr_accessor :logger
 
@@ -195,15 +195,15 @@ module Sentry
     # @return [Boolean]
     attr_accessor :strip_backtrace_load_path
 
-    # Insert sentry-trace to outgoing requests' headers
+    # Insert haystack-trace to outgoing requests' headers
     # @return [Boolean]
     attr_accessor :propagate_traces
 
-    # Array of rack env parameters to be included in the event sent to sentry.
+    # Array of rack env parameters to be included in the event sent to haystack.
     # @return [Array<String>]
     attr_accessor :rack_env_whitelist
 
-    # Release tag to be passed with every event sent to Sentry.
+    # Release tag to be passed with every event sent to Haystack.
     # We automatically try to set this to a git SHA or Capistrano release.
     # @return [String]
     attr_reader :release
@@ -222,11 +222,11 @@ module Sentry
     # - user cookie
     # - request body
     # - query string
-    # will not be sent to Sentry.
+    # will not be sent to Haystack.
     # @return [Boolean]
     attr_accessor :send_default_pii
 
-    # Allow to skip Sentry emails within rake tasks
+    # Allow to skip Haystack emails within rake tasks
     # @return [Boolean]
     attr_accessor :skip_rake_integration
 
@@ -282,12 +282,12 @@ module Sentry
     # @return [Boolean]
     attr_accessor :enable_backpressure_handling
 
-    # Allowlist of outgoing request targets to which sentry-trace and baggage headers are attached.
+    # Allowlist of outgoing request targets to which haystack-trace and baggage headers are attached.
     # Default is all (/.*/)
     # @return [Array<String, Regexp>]
     attr_accessor :trace_propagation_targets
 
-    # The instrumenter to use, :sentry or :otel
+    # The instrumenter to use, :haystack or :otel
     # @return [Symbol]
     attr_reader :instrumenter
 
@@ -310,16 +310,18 @@ module Sentry
     # @!visibility private
     attr_reader :errors, :gem_specs
 
+    attr_accessor :js
+
     # These exceptions could enter Puma's `lowlevel_error_handler` callback and the SDK's Puma integration
     # But they are mostly considered as noise and should be ignored by default
-    # Please see https://github.com/getsentry/sentry-ruby/pull/2026 for more information
+    # Please see https://github.com/gethaystack/haystack/pull/2026 for more information
     PUMA_IGNORE_DEFAULT = [
       "Puma::MiniSSL::SSLError",
       "Puma::HttpParserError",
       "Puma::HttpParserError501"
     ].freeze
 
-    # Most of these errors generate 4XX responses. In general, Sentry clients
+    # Most of these errors generate 4XX responses. In general, Haystack clients
     # only automatically report 5xx responses.
     IGNORE_DEFAULT = [
       "Mongoid::Errors::DocumentNotFound",
@@ -334,14 +336,14 @@ module Sentry
       SERVER_PORT
     ].freeze
 
-    HEROKU_DYNO_METADATA_MESSAGE = "You are running on Heroku but haven't enabled Dyno Metadata. For Sentry's "\
+    HEROKU_DYNO_METADATA_MESSAGE = "You are running on Heroku but haven't enabled Dyno Metadata. For Haystack's "\
     "release detection to work correctly, please run `heroku labs:enable runtime-dyno-metadata`"
 
-    LOG_PREFIX = "** [Sentry] "
+    LOG_PREFIX = "** [Haystack] "
     MODULE_SEPARATOR = "::"
     SKIP_INSPECTION_ATTRIBUTES = [:@linecache, :@stacktrace_builder]
 
-    INSTRUMENTERS = [:sentry, :otel]
+    INSTRUMENTERS = [:haystack, :otel]
 
     PROPAGATION_TARGETS_MATCH_ALL = /.*/
 
@@ -351,7 +353,7 @@ module Sentry
 
     class << self
       # Post initialization callbacks are called at the end of initialization process
-      # allowing extending the configuration of sentry-ruby by multiple extensions
+      # allowing extending the configuration of haystack by multiple extensions
       def post_initialization_callbacks
         @post_initialization_callbacks ||= []
       end
@@ -364,7 +366,7 @@ module Sentry
 
     def initialize
       self.app_dirs_pattern = APP_DIRS_PATTERN
-      self.debug = Sentry::Utils::EnvHelper.env_to_bool(ENV["SENTRY_DEBUG"])
+      self.debug = Haystack::Utils::EnvHelper.env_to_bool(ENV["HAYSTACK_DEBUG"])
       self.background_worker_threads = (processor_count / 2.0).ceil
       self.background_worker_max_queue = BackgroundWorker::DEFAULT_MAX_QUEUE
       self.backtrace_cleanup_callback = nil
@@ -378,8 +380,8 @@ module Sentry
       self.exclude_loggers = []
       self.excluded_exceptions = IGNORE_DEFAULT + PUMA_IGNORE_DEFAULT
       self.inspect_exception_causes_for_exclusion = true
-      self.linecache = ::Sentry::LineCache.new
-      self.logger = ::Sentry::Logger.new(STDOUT)
+      self.linecache = ::Haystack::LineCache.new
+      self.logger = ::Haystack::Logger.new(STDOUT)
       self.project_root = Dir.pwd
       self.propagate_traces = true
 
@@ -391,13 +393,13 @@ module Sentry
       self.auto_session_tracking = true
       self.enable_backpressure_handling = false
       self.trusted_proxies = []
-      self.dsn = ENV["SENTRY_DSN"]
+      self.dsn = ENV["HAYSTACK_DSN"]
 
-      spotlight_env = ENV["SENTRY_SPOTLIGHT"]
-      spotlight_bool = Sentry::Utils::EnvHelper.env_to_bool(spotlight_env, strict: true)
+      spotlight_env = ENV["HAYSTACK_SPOTLIGHT"]
+      spotlight_bool = Haystack::Utils::EnvHelper.env_to_bool(spotlight_env, strict: true)
       self.spotlight = spotlight_bool.nil? ? (spotlight_env || false) : spotlight_bool
       self.server_name = server_name_from_env
-      self.instrumenter = :sentry
+      self.instrumenter = :haystack
       self.trace_propagation_targets = [PROPAGATION_TARGETS_MATCH_ALL]
       self.enabled_patches = DEFAULT_PATCHES.dup
 
@@ -407,7 +409,10 @@ module Sentry
       self.traces_sampler = nil
       self.enable_tracing = nil
 
-      self.profiler_class = Sentry::Profiler
+      self.profiler_class = Haystack::Profiler
+
+      #front
+      self.js = JsConfig.new
 
       @transport = Transport::Configuration.new
       @cron = Cron::Configuration.new
@@ -434,9 +439,9 @@ module Sentry
 
       log_warn <<~MSG
 
-        sentry-ruby now sends events asynchronously by default with its background worker (supported since 4.1.0).
+        haystack now sends events asynchronously by default with its background worker (supported since 4.1.0).
         The `config.async` callback has become redundant while continuing to cause issues.
-        (The problems of `async` are detailed in https://github.com/getsentry/sentry-ruby/issues/1522)
+        (The problems of `async` are detailed in https://github.com/gethaystack/haystack/issues/1522)
 
         Therefore, we encourage you to remove it and let the background worker take care of async job sending.
       It's deprecation is planned in the next major release (6.0), which is scheduled around the 3rd quarter of 2022.
@@ -453,7 +458,7 @@ module Sentry
           Array(logger)
         end
 
-      require "sentry/breadcrumb/sentry_logger" if loggers.include?(:sentry_logger)
+      require "haystack/breadcrumb/haystack_logger" if loggers.include?(:haystack_logger)
 
       @breadcrumbs_logger = logger
     end
@@ -481,7 +486,7 @@ module Sentry
     end
 
     def instrumenter=(instrumenter)
-      @instrumenter = INSTRUMENTERS.include?(instrumenter) ? instrumenter : :sentry
+      @instrumenter = INSTRUMENTERS.include?(instrumenter) ? instrumenter : :haystack
     end
 
     def enable_tracing=(enable_tracing)
@@ -500,16 +505,16 @@ module Sentry
 
     def profiles_sample_rate=(profiles_sample_rate)
       raise ArgumentError, "profiles_sample_rate must be a Numeric or nil" unless is_numeric_or_nil?(profiles_sample_rate)
-      log_warn("Please make sure to include the 'stackprof' gem in your Gemfile to use Profiling with Sentry.") unless defined?(StackProf)
+      log_warn("Please make sure to include the 'stackprof' gem in your Gemfile to use Profiling with Haystack.") unless defined?(StackProf)
       @profiles_sample_rate = profiles_sample_rate
     end
 
     def profiler_class=(profiler_class)
-      if profiler_class == Sentry::Vernier::Profiler
+      if profiler_class == Haystack::Vernier::Profiler
         begin
           require "vernier"
         rescue LoadError
-          raise ArgumentError, "Please add the 'vernier' gem to your Gemfile to use the Vernier profiler with Sentry."
+          raise ArgumentError, "Please add the 'vernier' gem to your Gemfile to use the Vernier profiler with Haystack."
         end
       end
 
@@ -537,9 +542,9 @@ module Sentry
     end
 
     def exception_class_allowed?(exc)
-      if exc.is_a?(Sentry::Error)
+      if exc.is_a?(Haystack::Error)
         # Try to prevent error reporting loops
-        log_debug("Refusing to capture Sentry error: #{exc.inspect}")
+        log_debug("Refusing to capture Haystack error: #{exc.inspect}")
         false
       elsif excluded_exception?(exc)
         log_debug("User excluded error: #{exc.inspect}")
@@ -574,8 +579,8 @@ module Sentry
     def csp_report_uri
       if dsn && dsn.valid?
         uri = dsn.csp_report_uri
-        uri += "&sentry_release=#{CGI.escape(release)}" if release && !release.empty?
-        uri += "&sentry_environment=#{CGI.escape(environment)}" if environment && !environment.empty?
+        uri += "&haystack_release=#{CGI.escape(release)}" if release && !release.empty?
+        uri += "&haystack_environment=#{CGI.escape(environment)}" if environment && !environment.empty?
         uri
       end
     end
@@ -635,7 +640,7 @@ module Sentry
 
     def matches_exception?(excluded_exception_class, incoming_exception)
       if inspect_exception_causes_for_exclusion?
-        Sentry::Utils::ExceptionCauseChain.exception_to_array(incoming_exception).any? { |cause| excluded_exception_class === cause }
+        Haystack::Utils::ExceptionCauseChain.exception_to_array(incoming_exception).any? { |cause| excluded_exception_class === cause }
       else
         excluded_exception_class === incoming_exception
       end
@@ -665,7 +670,7 @@ module Sentry
     end
 
     def environment_from_env
-      ENV["SENTRY_CURRENT_ENV"] || ENV["SENTRY_ENVIRONMENT"] || ENV["RAILS_ENV"] || ENV["RACK_ENV"] || "development"
+      ENV["HAYSTACK_CURRENT_ENV"] || ENV["HAYSTACK_ENVIRONMENT"] || ENV["RAILS_ENV"] || ENV["RACK_ENV"] || "development"
     end
 
     def server_name_from_env
@@ -691,6 +696,29 @@ module Sentry
     def processor_count
       available_processor_count = Concurrent.available_processor_count if Concurrent.respond_to?(:available_processor_count)
       available_processor_count || Concurrent.processor_count
+    end
+
+    class JsConfig
+      attr_accessor :dsn, :replays_session_sample_rate, :replays_on_error_sample_rate,
+                    :environment, :traces_sample_rate, :mask_all_text, :block_all_media
+
+      attr_accessor :user_name_method, :user_email_method, :user_url_method, :user_image_method
+
+
+      def initialize
+        self.dsn = ENV['HAYSTACK_DSN']
+        self.replays_session_sample_rate = 0
+        self.replays_on_error_sample_rate = 1
+        self.environment = ::Rails.env
+        self.traces_sample_rate = 1
+        self.mask_all_text = false
+        self.block_all_media = true
+
+        self.user_name_method  = :name        # Default: current_user.name
+        self.user_email_method = :email       # Default: current_user.email
+        self.user_url_method   = :user_url    # Default: user_url(current_user)
+        self.user_image_method = :avatar_image_url  # Default: current_user.avatar_url
+      end
     end
   end
 end

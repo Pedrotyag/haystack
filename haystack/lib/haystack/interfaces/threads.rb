@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Sentry
+module Haystack
   class ThreadsInterface
     # @param crashed [Boolean]
     # @param stacktrace [Array]

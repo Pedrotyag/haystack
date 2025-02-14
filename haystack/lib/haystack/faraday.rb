@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Sentry
+module Haystack
   module Faraday
     OP_NAME = "http.client"
 
@@ -29,9 +29,9 @@ module Sentry
       include Utils::HttpTracing
 
       def instrument(op_name, env, &block)
-        return block.call unless Sentry.initialized?
+        return block.call unless Haystack.initialized?
 
-        Sentry.with_child_span(op: op_name, start_timestamp: Sentry.utc_now.to_f, origin: SPAN_ORIGIN) do |sentry_span|
+        Haystack.with_child_span(op: op_name, start_timestamp: Haystack.utc_now.to_f, origin: SPAN_ORIGIN) do |haystack_span|
           request_info = extract_request_info(env)
 
           if propagate_trace?(request_info[:url])
@@ -41,12 +41,12 @@ module Sentry
           res = block.call
           response_status = res.status
 
-          if record_sentry_breadcrumb?
-            record_sentry_breadcrumb(request_info, response_status)
+          if record_haystack_breadcrumb?
+            record_haystack_breadcrumb(request_info, response_status)
           end
 
-          if sentry_span
-            set_span_info(sentry_span, request_info, response_status)
+          if haystack_span
+            set_span_info(haystack_span, request_info, response_status)
           end
 
           res
@@ -59,7 +59,7 @@ module Sentry
         url = env[:url].scheme + "://" + env[:url].host + env[:url].path
         result = { method: env[:method].to_s.upcase, url: url }
 
-        if Sentry.configuration.send_default_pii
+        if Haystack.configuration.send_default_pii
           result[:query] = env[:url].query
           result[:body] = env[:body]
         end
@@ -70,8 +70,8 @@ module Sentry
   end
 end
 
-Sentry.register_patch(:faraday) do
+Haystack.register_patch(:faraday) do
   if defined?(::Faraday)
-    ::Faraday::Connection.prepend(Sentry::Faraday::Connection)
+    ::Faraday::Connection.prepend(Haystack::Faraday::Connection)
   end
 end

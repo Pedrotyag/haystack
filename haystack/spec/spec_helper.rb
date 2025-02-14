@@ -13,7 +13,7 @@ require "stackprof" unless RUBY_PLATFORM == "java"
 require "vernier" unless RUBY_PLATFORM == "java" || RUBY_VERSION < "3.2"
 
 SimpleCov.start do
-  project_name "sentry-ruby"
+  project_name "haystack"
   root File.join(__FILE__, "../../../")
   coverage_dir File.join(__FILE__, "../../coverage")
 end
@@ -23,8 +23,8 @@ if ENV["CI"]
   SimpleCov.formatter = SimpleCov::Formatter::CoberturaFormatter
 end
 
-require "sentry-ruby"
-require "sentry/test_helper"
+require "haystack"
+require "haystack/test_helper"
 
 require "support/profiler"
 require "support/stacktrace_test_fixture"
@@ -36,7 +36,7 @@ RSpec.configure do |config|
   # Disable RSpec exposing methods globally on `Module` and `main`
   config.disable_monkey_patching!
 
-  config.include(Sentry::TestHelper)
+  config.include(Haystack::TestHelper)
 
   config.expect_with :rspec do |c|
     c.syntax = :expect
@@ -44,10 +44,10 @@ RSpec.configure do |config|
 
   config.before :each do
     # Make sure we reset the env in case something leaks in
-    ENV.delete('SENTRY_DSN')
-    ENV.delete('SENTRY_CURRENT_ENV')
-    ENV.delete('SENTRY_ENVIRONMENT')
-    ENV.delete('SENTRY_RELEASE')
+    ENV.delete('HAYSTACK_DSN')
+    ENV.delete('HAYSTACK_CURRENT_ENV')
+    ENV.delete('HAYSTACK_ENVIRONMENT')
+    ENV.delete('HAYSTACK_RELEASE')
     ENV.delete('RAILS_ENV')
     ENV.delete('RACK_ENV')
   end
@@ -82,7 +82,7 @@ module TestHelpers
   end
 
   def self.vernier_installed?
-    require "sentry/vernier/profiler"
+    require "haystack/vernier/profiler"
     defined?(::Vernier)
   end
 
@@ -138,10 +138,10 @@ def build_exception_with_recursive_cause
 end
 
 def perform_basic_setup
-  Sentry.init do |config|
+  Haystack.init do |config|
     config.logger = Logger.new(nil)
-    config.dsn = Sentry::TestHelper::DUMMY_DSN
-    config.transport.transport_class = Sentry::DummyTransport
+    config.dsn = Haystack::TestHelper::DUMMY_DSN
+    config.transport.transport_class = Haystack::DummyTransport
     # so the events will be sent synchronously for testing
     config.background_worker_threads = 0
     yield(config) if block_given?

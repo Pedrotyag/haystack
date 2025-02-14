@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 require 'benchmark/memory'
-require "sentry-ruby"
-require "sentry/benchmarks/benchmark_transport"
+require "haystack"
+require "haystack/benchmarks/benchmark_transport"
 require_relative "application"
 
 TestApp.configure do |config|
@@ -12,7 +12,7 @@ end
 
 app = create_app do |config|
   config.logger = ::Logger.new(STDOUT)
-  config.transport.transport_class = Sentry::BenchmarkTransport
+  config.transport.transport_class = Haystack::BenchmarkTransport
   config.breadcrumbs_logger = [:active_support_logger]
 end
 
@@ -26,6 +26,6 @@ Benchmark.memory do |x|
   x.hold!("/tmp/allocation_comparison.json")
 end
 
-# transport = Sentry.get_current_client.transport
+# transport = Haystack.get_current_client.transport
 # puts(transport.events.count)
 # puts(transport.events.first)

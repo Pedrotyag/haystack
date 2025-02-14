@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Sentry
+module Haystack
   module Rails
     module Breadcrumb
       module ActiveSupportLogger
@@ -13,12 +13,12 @@ module Sentry
               data = data.slice(*@allowed_keys[name])
             end
 
-            crumb = Sentry::Breadcrumb.new(
+            crumb = Haystack::Breadcrumb.new(
               data: data,
               category: name,
               timestamp: started.to_i
             )
-            Sentry.add_breadcrumb(crumb)
+            Haystack.add_breadcrumb(crumb)
           end
 
           def inject(allowed_keys)

@@ -6,21 +6,21 @@ comment:
   layout: "header, diff, flags, components, tree"
 component_management:
   individual_components:
-    - component_id: "sentry-ruby"
+    - component_id: "haystack-ruby"
       paths:
-        - "sentry-ruby/"
-    - component_id: "sentry-rails"
+        - "haystack-ruby/"
+    - component_id: "haystack-rails"
       paths:
-        - "sentry-rails/"
-    - component_id: "sentry-sidekiq"
+        - "haystack-rails/"
+    - component_id: "haystack-sidekiq"
       paths:
-        - "sentry-sidekiq/"
-    - component_id: "sentry-resque"
+        - "haystack-sidekiq/"
+    - component_id: "haystack-resque"
       paths:
-        - "sentry-resque/"
-    - component_id: "sentry-delayed_job"
+        - "haystack-resque/"
+    - component_id: "haystack-delayed_job"
       paths:
-        - "sentry-delayed_job/"
-    - component_id: "sentry-opentelemetry"
+        - "haystack-delayed_job/"
+    - component_id: "haystack-opentelemetry"
       paths:
-        - "sentry-opentelemetry/"
+        - "haystack-opentelemetry/"

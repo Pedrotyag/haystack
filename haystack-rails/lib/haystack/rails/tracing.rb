@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-module Sentry
+module Haystack
   module Rails
     module Tracing
-      START_TIMESTAMP_NAME = :sentry_start_timestamp
+      START_TIMESTAMP_NAME = :haystack_start_timestamp
 
       def self.register_subscribers(subscribers)
         @subscribers = subscribers
@@ -42,11 +42,11 @@ module Sentry
       # this is necessary because instrumentation events don't record absolute start/finish time
       # so we need to retrieve the correct time this way
       def self.patch_active_support_notifications
-        unless ::ActiveSupport::Notifications::Instrumenter.ancestors.include?(SentryNotificationExtension)
-          ::ActiveSupport::Notifications::Instrumenter.send(:prepend, SentryNotificationExtension)
+        unless ::ActiveSupport::Notifications::Instrumenter.ancestors.include?(HaystackNotificationExtension)
+          ::ActiveSupport::Notifications::Instrumenter.send(:prepend, HaystackNotificationExtension)
         end
 
-        SentryNotificationExtension.module_eval do
+        HaystackNotificationExtension.module_eval do
           def instrument(name, payload = {}, &block)
             # only inject timestamp to the events the SDK subscribes to
             if Tracing.subscribed_tracing_events.include?(name)
@@ -59,8 +59,8 @@ module Sentry
       end
 
       def self.remove_active_support_notifications_patch
-        if ::ActiveSupport::Notifications::Instrumenter.ancestors.include?(SentryNotificationExtension)
-          SentryNotificationExtension.module_eval do
+        if ::ActiveSupport::Notifications::Instrumenter.ancestors.include?(HaystackNotificationExtension)
+          HaystackNotificationExtension.module_eval do
             def instrument(name, payload = {}, &block)
               super
             end
@@ -69,11 +69,11 @@ module Sentry
       end
 
       def self.get_current_transaction
-        Sentry.get_current_scope.get_transaction if Sentry.initialized?
+        Haystack.get_current_scope.get_transaction if Haystack.initialized?
       end
 
       # it's just a container for the extended method
-      module SentryNotificationExtension
+      module HaystackNotificationExtension
       end
     end
   end

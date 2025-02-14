@@ -6,7 +6,7 @@ require "ipaddr"
 # middleware have been removed, because the Event IP just needs to be accurate,
 # and spoofing an IP here only makes data inaccurate, not insecure. Don't re-use
 # this module if you have to *trust* the IP address.
-module Sentry
+module Haystack
   module Utils
     class RealIp
       LOCAL_ADDRESSES = [

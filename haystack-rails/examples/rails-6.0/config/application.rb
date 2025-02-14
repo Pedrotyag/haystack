@@ -17,7 +17,7 @@ module Rails60
     # the framework and any gems in your application.
     config.consider_all_requests_local = false
 
-    # https://github.com/getsentry/raven-ruby/issues/494
+    # https://github.com/gethaystack/raven-ruby/issues/494
     config.exceptions_app = self.routes
 
     config.webpacker.check_yarn_integrity = false

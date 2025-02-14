@@ -24,7 +24,7 @@ end
 
 class FailedWithExtraJob < FailedJob
   def perform
-    Sentry.get_current_scope.set_extras(foo: :bar)
+    Haystack.get_current_scope.set_extras(foo: :bar)
     super
   end
 end
@@ -58,17 +58,17 @@ class ProblematicRescuedActiveJob < FailedWithExtraJob
 end
 
 class NormalJobWithCron < NormalJob
-  include Sentry::Cron::MonitorCheckIns
-  sentry_monitor_check_ins
+  include Haystack::Cron::MonitorCheckIns
+  haystack_monitor_check_ins
 end
 
 class FailedJobWithCron < FailedJob
-  include Sentry::Cron::MonitorCheckIns
-  sentry_monitor_check_ins slug: "failed_job", monitor_config: Sentry::Cron::MonitorConfig.from_crontab("5 * * * *")
+  include Haystack::Cron::MonitorCheckIns
+  haystack_monitor_check_ins slug: "failed_job", monitor_config: Haystack::Cron::MonitorConfig.from_crontab("5 * * * *")
 end
 
 
-RSpec.describe "without Sentry initialized", type: :job do
+RSpec.describe "without Haystack initialized", type: :job do
   it "runs job" do
     expect { FailedJob.perform_now }.to raise_error(FailedJob::TestError)
   end
@@ -88,7 +88,7 @@ RSpec.describe "ActiveJob integration", type: :job do
   end
 
   let(:transport) do
-    Sentry.get_current_client.transport
+    Haystack.get_current_client.transport
   end
 
   it "returns #perform method's return value" do
@@ -101,14 +101,14 @@ RSpec.describe "ActiveJob integration", type: :job do
       post2 = Post.create!
 
       expect do
-        JobWithArgument.perform_now("foo", { bar: Sentry }, integer: 1, post: post, nested: { another_level: { post: post2 } })
+        JobWithArgument.perform_now("foo", { bar: Haystack }, integer: 1, post: post, nested: { another_level: { post: post2 } })
       end.to raise_error(RuntimeError)
 
       event = transport.events.last.to_json_compatible
       expect(event.dig("extra", "arguments")).to eq(
         [
           "foo",
-          { "bar" => "Sentry" },
+          { "bar" => "Haystack" },
           {
             "integer" => 1,
             "post" => "gid://rails-test-app/Post/#{post.id}",
@@ -163,7 +163,7 @@ RSpec.describe "ActiveJob integration", type: :job do
 
     expect(event["extra"]["foo"]).to eq("bar")
 
-    expect(Sentry.get_current_scope.extra).to eq({})
+    expect(Haystack.get_current_scope.extra).to eq({})
   end
 
   context "with tracing enabled" do
@@ -224,7 +224,7 @@ RSpec.describe "ActiveJob integration", type: :job do
       end
     end
 
-    it "reports the root cause to Sentry" do
+    it "reports the root cause to Haystack" do
       expect do
         DeserializationErrorJob.perform_now
       end.to raise_error(ActiveJob::DeserializationError, /divided by 0/)
@@ -237,7 +237,7 @@ RSpec.describe "ActiveJob integration", type: :job do
 
     context "and in user-defined reporting job too" do
       before do
-        Sentry.configuration.async = lambda do |event, hint|
+        Haystack.configuration.async = lambda do |event, hint|
           UserDefinedReportingJob.perform_now(event, hint)
         end
       end
@@ -257,9 +257,9 @@ RSpec.describe "ActiveJob integration", type: :job do
       end
     end
 
-    context "and in customized SentryJob too" do
+    context "and in customized HaystackJob too" do
       before do
-        class CustomSentryJob < ::Sentry::SendEventJob
+        class CustomHaystackJob < ::Haystack::SendEventJob
           def perform(event, hint)
             raise "Not excluded exception"
           rescue
@@ -267,8 +267,8 @@ RSpec.describe "ActiveJob integration", type: :job do
           end
         end
 
-        Sentry.configuration.async = lambda do |event, hint|
-          CustomSentryJob.perform_now(event, hint)
+        Haystack.configuration.async = lambda do |event, hint|
+          CustomHaystackJob.perform_now(event, hint)
         end
       end
 
@@ -281,7 +281,7 @@ RSpec.describe "ActiveJob integration", type: :job do
   end
 
   context 'using rescue_from' do
-    it 'does not trigger Sentry' do
+    it 'does not trigger Haystack' do
       expect_any_instance_of(RescuedActiveJob).to receive(:rescue_callback).once.and_call_original
 
       expect { RescuedActiveJob.perform_now }.not_to raise_error
@@ -309,14 +309,14 @@ RSpec.describe "ActiveJob integration", type: :job do
 
   context "when we are using an adapter which has a specific integration" do
     before do
-      Sentry.configuration.rails.skippable_job_adapters = ["ActiveJob::QueueAdapters::TestAdapter"]
+      Haystack.configuration.rails.skippable_job_adapters = ["ActiveJob::QueueAdapters::TestAdapter"]
     end
 
     after do
-      Sentry.configuration.rails.skippable_job_adapters = []
+      Haystack.configuration.rails.skippable_job_adapters = []
     end
 
-    it "does not trigger sentry and re-raises" do
+    it "does not trigger haystack and re-raises" do
       expect { FailedJob.perform_now }.to raise_error(FailedJob::TestError)
 
       expect(transport.events.size).to eq(0)
@@ -336,7 +336,7 @@ RSpec.describe "ActiveJob integration", type: :job do
 
         first = transport.events[0]
         check_in_id = first.check_in_id
-        expect(first).to be_a(Sentry::CheckInEvent)
+        expect(first).to be_a(Haystack::CheckInEvent)
         expect(first.to_hash).to include(
           type: 'check_in',
           check_in_id: check_in_id,
@@ -345,7 +345,7 @@ RSpec.describe "ActiveJob integration", type: :job do
         )
 
         second = transport.events[1]
-        expect(second).to be_a(Sentry::CheckInEvent)
+        expect(second).to be_a(Haystack::CheckInEvent)
         expect(second.to_hash).to include(
           :duration,
           type: 'check_in',
@@ -364,7 +364,7 @@ RSpec.describe "ActiveJob integration", type: :job do
 
         first = transport.events[0]
         check_in_id = first.check_in_id
-        expect(first).to be_a(Sentry::CheckInEvent)
+        expect(first).to be_a(Haystack::CheckInEvent)
         expect(first.to_hash).to include(
           type: 'check_in',
           check_in_id: check_in_id,
@@ -374,7 +374,7 @@ RSpec.describe "ActiveJob integration", type: :job do
         )
 
         second = transport.events[1]
-        expect(second).to be_a(Sentry::CheckInEvent)
+        expect(second).to be_a(Haystack::CheckInEvent)
         expect(second.to_hash).to include(
           :duration,
           type: 'check_in',

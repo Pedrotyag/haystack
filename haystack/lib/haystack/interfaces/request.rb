@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Sentry
+module Haystack
   class RequestInterface < Interface
     REQUEST_ID_HEADERS = %w[action_dispatch.request_id HTTP_X_REQUEST_ID].freeze
     CONTENT_HEADERS = %w[CONTENT_TYPE CONTENT_LENGTH].freeze
@@ -11,8 +11,8 @@ module Sentry
       "HTTP_X_FORWARDED_FOR"
     ].freeze
 
-    # See Sentry server default limits at
-    # https://github.com/getsentry/sentry/blob/master/src/sentry/conf/server.py
+    # See Haystack server default limits at
+    # https://github.com/gethaystack/haystack/blob/master/src/haystack/conf/server.py
     MAX_BODY_LIMIT = 4096 * 4
 
     # @return [String]
@@ -99,7 +99,7 @@ module Sentry
           # Rails adds objects to the Rack env that can sometimes raise exceptions
           # when `to_s` is called.
           # See: https://github.com/rails/rails/blob/master/actionpack/lib/action_dispatch/middleware/remote_ip.rb#L134
-          Sentry.logger.warn(LOGGER_PROGNAME) { "Error raised while formatting headers: #{e.message}" }
+          Haystack.logger.warn(LOGGER_PROGNAME) { "Error raised while formatting headers: #{e.message}" }
           next
         end
       end

@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require "sentry/transport"
+require "haystack/transport"
 
-module Sentry
+module Haystack
   class Client
     include LoggingHelper
 
@@ -17,7 +17,7 @@ module Sentry
     # @!macro configuration
     attr_reader :configuration
 
-    # @deprecated Use Sentry.logger to retrieve the current logger instead.
+    # @deprecated Use Haystack.logger to retrieve the current logger instead.
     attr_reader :logger
 
     # @param configuration [Configuration]
@@ -40,7 +40,7 @@ module Sentry
       @spotlight_transport = SpotlightTransport.new(configuration) if configuration.spotlight
     end
 
-    # Applies the given scope's data to the event and sends it to Sentry.
+    # Applies the given scope's data to the event and sends it to Haystack.
     # @param event [Event] the event to be sent.
     # @param scope [Scope] the scope with contextual data that'll be applied to the event before it's sent.
     # @param hint [Hash] the hint data that'll be passed to `before_send` callback and the scope's event processors.
@@ -92,10 +92,10 @@ module Sentry
     # @param envelope [Envelope] the envelope to be captured.
     # @return [void]
     def capture_envelope(envelope)
-      Sentry.background_worker.perform { send_envelope(envelope) }
+      Haystack.background_worker.perform { send_envelope(envelope) }
     end
 
-    # Flush pending events to Sentry.
+    # Flush pending events to Haystack.
     # @return [void]
     def flush
       transport.flush if configuration.sending_to_dsn_allowed?
@@ -112,7 +112,7 @@ module Sentry
       ignore_exclusions = hint.delete(:ignore_exclusions) { false }
       return if !ignore_exclusions && !@configuration.exception_class_allowed?(exception)
 
-      integration_meta = Sentry.integrations[hint[:integration]]
+      integration_meta = Haystack.integrations[hint[:integration]]
       mechanism = hint.delete(:mechanism) { Mechanism.new }
 
       ErrorEvent.new(configuration: configuration, integration_meta: integration_meta).tap do |event|
@@ -129,7 +129,7 @@ module Sentry
     def event_from_message(message, hint = {}, backtrace: nil)
       return unless @configuration.sending_allowed?
 
-      integration_meta = Sentry.integrations[hint[:integration]]
+      integration_meta = Haystack.integrations[hint[:integration]]
       event = ErrorEvent.new(configuration: configuration, integration_meta: integration_meta, message: message)
       event.add_threads_interface(backtrace: backtrace || caller)
       event.level = :error
@@ -158,7 +158,7 @@ module Sentry
 
       CheckInEvent.new(
         configuration: configuration,
-        integration_meta: Sentry.integrations[hint[:integration]],
+        integration_meta: Haystack.integrations[hint[:integration]],
         slug: slug,
         status: status,
         duration: duration,
@@ -186,7 +186,7 @@ module Sentry
         unless event.is_a?(ErrorEvent)
           # Avoid serializing the event object in this case because we aren't sure what it is and what it contains
           log_debug(<<~MSG)
-            Discarded event because before_send didn't return a Sentry::ErrorEvent object but an instance of #{event.class}
+            Discarded event because before_send didn't return a Haystack::ErrorEvent object but an instance of #{event.class}
           MSG
           transport.record_lost_event(:before_send, data_category)
           return
@@ -203,7 +203,7 @@ module Sentry
         else
           # Avoid serializing the event object in this case because we aren't sure what it is and what it contains
           log_debug(<<~MSG)
-            Discarded event because before_send_transaction didn't return a Sentry::TransactionEvent object but an instance of #{event.class}
+            Discarded event because before_send_transaction didn't return a Haystack::TransactionEvent object but an instance of #{event.class}
           MSG
           transport.record_lost_event(:before_send, "transaction")
           transport.record_lost_event(:before_send, "span", num: spans_before + 1)
@@ -222,7 +222,7 @@ module Sentry
       raise
     end
 
-    # Send an envelope directly to Sentry.
+    # Send an envelope directly to Haystack.
     # @param envelope [Envelope] the envelope to be sent.
     # @return [void]
     def send_envelope(envelope)
@@ -238,21 +238,21 @@ module Sentry
       raise
     end
 
-    # @deprecated use Sentry.get_traceparent instead.
+    # @deprecated use Haystack.get_traceparent instead.
     #
-    # Generates a Sentry trace for distribted tracing from the given Span.
+    # Generates a Haystack trace for distribted tracing from the given Span.
     # Returns `nil` if `config.propagate_traces` is `false`.
     # @param span [Span] the span to generate trace from.
     # @return [String, nil]
-    def generate_sentry_trace(span)
+    def generate_haystack_trace(span)
       return unless configuration.propagate_traces
 
-      trace = span.to_sentry_trace
-      log_debug("[Tracing] Adding #{SENTRY_TRACE_HEADER_NAME} header to outgoing request: #{trace}")
+      trace = span.to_haystack_trace
+      log_debug("[Tracing] Adding #{HAYSTACK_TRACE_HEADER_NAME} header to outgoing request: #{trace}")
       trace
     end
 
-    # @deprecated Use Sentry.get_baggage instead.
+    # @deprecated Use Haystack.get_baggage instead.
     #
     # Generates a W3C Baggage header for distributed tracing from the given Span.
     # Returns `nil` if `config.propagate_traces` is `false`.
@@ -273,7 +273,7 @@ module Sentry
     private
 
     def dispatch_background_event(event, hint)
-      Sentry.background_worker.perform do
+      Haystack.background_worker.perform do
         send_event(event, hint)
       end
     end

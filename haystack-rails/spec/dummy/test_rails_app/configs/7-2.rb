@@ -2,7 +2,7 @@
 
 require "active_storage/engine"
 require "action_cable/engine"
-require "sentry/rails/error_subscriber"
+require "haystack/rails/error_subscriber"
 
 def run_pre_initialize_cleanup
   # Zeitwerk checks if registered loaders load paths repeatedly and raises error if that happens.
@@ -29,7 +29,7 @@ def run_pre_initialize_cleanup
 
   # Rails 7.1 stores the error reporter directly under the ActiveSupport class.
   # So we need to make sure the subscriber is not subscribed unexpectedly before any tests
-  ActiveSupport.error_reporter.unsubscribe(Sentry::Rails::ErrorSubscriber)
+  ActiveSupport.error_reporter.unsubscribe(Haystack::Rails::ErrorSubscriber)
 end
 
 def configure_app(app)

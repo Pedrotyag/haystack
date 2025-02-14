@@ -1,4 +1,4 @@
 build:
 	bundle install
-	gem build sentry-ruby-core.gemspec
-	gem build sentry-ruby.gemspec
+	gem build haystack-core.gemspec
+	gem build haystack.gemspec

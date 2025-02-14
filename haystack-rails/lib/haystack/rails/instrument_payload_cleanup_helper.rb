@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Sentry
+module Haystack
   module Rails
     module InstrumentPayloadCleanupHelper
       IGNORED_DATA_TYPES = [:request, :response, :headers, :exception, :exception_object, Tracing::START_TIMESTAMP_NAME]

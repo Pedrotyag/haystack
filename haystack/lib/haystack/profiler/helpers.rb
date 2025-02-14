@@ -2,7 +2,7 @@
 
 require "securerandom"
 
-module Sentry
+module Haystack
   class Profiler
     module Helpers
       def in_app?(abs_path)

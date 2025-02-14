@@ -2,9 +2,9 @@
 
 require "spec_helper"
 
-RSpec.describe Sentry::Rails::Tracing, type: :request do
+RSpec.describe Haystack::Rails::Tracing, type: :request do
   let(:transport) do
-    Sentry.get_current_client.transport
+    Haystack.get_current_client.transport
   end
 
   let(:event) do
@@ -262,30 +262,30 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
       expect(first_span[:description]).to eq("PostsController#show")
     end
 
-    context "with sentry-trace and baggage headers" do
+    context "with haystack-trace and baggage headers" do
       let(:external_transaction) do
-        Sentry::Transaction.new(
+        Haystack::Transaction.new(
           op: "pageload",
           status: "ok",
           sampled: true,
           name: "a/path",
-          hub: Sentry.get_current_hub
+          hub: Haystack.get_current_hub
         )
       end
 
       let(:baggage) do
         "other-vendor-value-1=foo;bar;baz, "\
-          "sentry-trace_id=771a43a4192642f0b136d5159a501700, "\
-          "sentry-public_key=49d0f7386ad645858ae85020e393bef3, "\
-          "sentry-sample_rate=0.01337, "\
-          "sentry-user_id=Am%C3%A9lie,  "\
+          "haystack-trace_id=771a43a4192642f0b136d5159a501700, "\
+          "haystack-public_key=49d0f7386ad645858ae85020e393bef3, "\
+          "haystack-sample_rate=0.01337, "\
+          "haystack-user_id=Am%C3%A9lie,  "\
           "other-vendor-value-2=foo;bar;"
       end
 
       it "inherits trace info from the transaction" do
         p = Post.create!
 
-        headers = { "sentry-trace" => external_transaction.to_sentry_trace, baggage: baggage }
+        headers = { "haystack-trace" => external_transaction.to_haystack_trace, baggage: baggage }
         get "/posts/#{p.id}", headers: headers
 
         transaction = transport.events.last

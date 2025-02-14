@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Sentry
+module Haystack
   module Utils
     module ExceptionCauseChain
       def self.exception_to_array(exception)

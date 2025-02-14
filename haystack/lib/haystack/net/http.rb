@@ -2,9 +2,9 @@
 
 require "net/http"
 require "resolv"
-require "sentry/utils/http_tracing"
+require "haystack/utils/http_tracing"
 
-module Sentry
+module Haystack
   # @api private
   module Net
     module HTTP
@@ -30,10 +30,10 @@ module Sentry
       #
       # So we're only instrumenting request when `Net::HTTP` is already started
       def request(req, body = nil, &block)
-        return super unless started? && Sentry.initialized?
-        return super if from_sentry_sdk?
+        return super unless started? && Haystack.initialized?
+        return super if from_haystack_sdk?
 
-        Sentry.with_child_span(op: OP_NAME, start_timestamp: Sentry.utc_now.to_f, origin: SPAN_ORIGIN) do |sentry_span|
+        Haystack.with_child_span(op: OP_NAME, start_timestamp: Haystack.utc_now.to_f, origin: SPAN_ORIGIN) do |haystack_span|
           request_info = extract_request_info(req)
 
           if propagate_trace?(request_info[:url])
@@ -43,12 +43,12 @@ module Sentry
           res = super
           response_status = res.code.to_i
 
-          if record_sentry_breadcrumb?
-            record_sentry_breadcrumb(request_info, response_status)
+          if record_haystack_breadcrumb?
+            record_haystack_breadcrumb(request_info, response_status)
           end
 
-          if sentry_span
-            set_span_info(sentry_span, request_info, response_status)
+          if haystack_span
+            set_span_info(haystack_span, request_info, response_status)
           end
 
           res
@@ -57,8 +57,8 @@ module Sentry
 
       private
 
-      def from_sentry_sdk?
-        dsn = Sentry.configuration.dsn
+      def from_haystack_sdk?
+        dsn = Haystack.configuration.dsn
         dsn && dsn.host == self.address
       end
 
@@ -71,7 +71,7 @@ module Sentry
 
         result = { method: req.method, url: url }
 
-        if Sentry.configuration.send_default_pii
+        if Haystack.configuration.send_default_pii
           result[:query] = uri.query
           result[:body] = req.body
         end
@@ -82,4 +82,4 @@ module Sentry
   end
 end
 
-Sentry.register_patch(:http, Sentry::Net::HTTP, Net::HTTP)
+Haystack.register_patch(:http, Haystack::Net::HTTP, Net::HTTP)

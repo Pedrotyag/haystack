@@ -5,16 +5,16 @@ gemfile(true) do
   git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
   ruby '> 2.6'
-  gem 'sentry-rails', path: "../../"
+  gem 'haystack-rails', path: "../../"
   gem 'railties', '~> 6.0.0'
 end
 
 require "action_view/railtie"
 require "action_controller/railtie"
-require 'sentry-rails'
+require 'haystack-rails'
 
-Sentry.init do |config|
-  config.dsn = 'https://2fb45f003d054a7ea47feb45898f7649@o447951.ingest.sentry.io/5434472'
+Haystack.init do |config|
+  config.dsn = 'https://2fb45f003d054a7ea47feb45898f7649@o447951.ingest.haystack.io/5434472'
   config.logger = Logger.new($stdout)
 end
 

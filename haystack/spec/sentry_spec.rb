@@ -3,7 +3,7 @@
 require "spec_helper"
 require 'contexts/with_request_mock'
 
-RSpec.describe Sentry do
+RSpec.describe Haystack do
   include_context "with request mock"
 
   before do
@@ -11,32 +11,32 @@ RSpec.describe Sentry do
   end
 
   let(:event) do
-    Sentry::ErrorEvent.new(configuration: Sentry::Configuration.new)
+    Haystack::ErrorEvent.new(configuration: Haystack::Configuration.new)
   end
 
   describe ".init" do
     context "with block argument" do
       it "initializes the current hub and main hub" do
         described_class.init do |config|
-          config.dsn = Sentry::TestHelper::DUMMY_DSN
+          config.dsn = Haystack::TestHelper::DUMMY_DSN
         end
 
         current_hub = described_class.get_current_hub
-        expect(current_hub).to be_a(Sentry::Hub)
-        expect(current_hub.current_scope).to be_a(Sentry::Scope)
+        expect(current_hub).to be_a(Haystack::Hub)
+        expect(current_hub.current_scope).to be_a(Haystack::Scope)
         expect(subject.get_main_hub).to eq(current_hub)
       end
     end
 
     context "without block argument" do
       it "initializes the current hub and main hub" do
-        ENV['SENTRY_DSN'] = Sentry::TestHelper::DUMMY_DSN
+        ENV['HAYSTACK_DSN'] = Haystack::TestHelper::DUMMY_DSN
 
         described_class.init
 
         current_hub = described_class.get_current_hub
-        expect(current_hub).to be_a(Sentry::Hub)
-        expect(current_hub.current_scope).to be_a(Sentry::Scope)
+        expect(current_hub).to be_a(Haystack::Hub)
+        expect(current_hub.current_scope).to be_a(Haystack::Scope)
         expect(subject.get_main_hub).to eq(current_hub)
       end
     end
@@ -56,7 +56,7 @@ RSpec.describe Sentry do
           config.auto_session_tracking = true
         end
 
-        expect(described_class.session_flusher).to be_a(Sentry::SessionFlusher)
+        expect(described_class.session_flusher).to be_a(Haystack::SessionFlusher)
       end
 
       context "when it's not under the enabled environment" do
@@ -80,7 +80,7 @@ RSpec.describe Sentry do
         described_class.clone_hub_to_current_thread
         thread_hub = described_class.get_current_hub
 
-        expect(thread_hub).to be_a(Sentry::Hub)
+        expect(thread_hub).to be_a(Haystack::Hub)
         expect(thread_hub).not_to eq(main_hub)
         expect(thread_hub.current_client).to eq(main_hub.current_client)
         expect(described_class.get_main_hub).to eq(main_hub)
@@ -90,15 +90,15 @@ RSpec.describe Sentry do
     end
 
     it "stores the hub in a thread variable (instead of just fiber variable)" do
-      Sentry.set_tags(outside_fiber: true)
+      Haystack.set_tags(outside_fiber: true)
 
       fiber = Fiber.new do
-        Sentry.set_tags(inside_fiber: true)
+        Haystack.set_tags(inside_fiber: true)
       end
 
       fiber.resume
 
-      expect(Sentry.get_current_scope.tags).to eq({ outside_fiber: true, inside_fiber: true })
+      expect(Haystack.get_current_scope.tags).to eq({ outside_fiber: true, inside_fiber: true })
     end
   end
 
@@ -114,26 +114,26 @@ RSpec.describe Sentry do
   shared_examples "capture_helper" do
     context "with sending_allowed? condition" do
       before do
-        expect(Sentry.configuration).to receive(:sending_allowed?).and_return(false)
+        expect(Haystack.configuration).to receive(:sending_allowed?).and_return(false)
         capture_subject
       end
 
       it "doesn't build the event" do
         # don't even initialize event objects
-        expect(Sentry::Event).not_to receive(:new)
+        expect(Haystack::Event).not_to receive(:new)
         described_class.send(capture_helper, capture_subject)
       end
     end
 
     context "with sending allowed but sending to dsn not allowed" do
       before do
-        allow(Sentry.configuration).to receive(:sending_allowed?).and_return(true)
-        allow(Sentry.configuration).to receive(:sending_to_dsn_allowed?).and_return(false)
+        allow(Haystack.configuration).to receive(:sending_allowed?).and_return(true)
+        allow(Haystack.configuration).to receive(:sending_to_dsn_allowed?).and_return(false)
       end
 
       it "doesn't send the event nor assign last_event_id" do
         described_class.send(capture_helper, capture_subject)
-        expect(sentry_events).to be_empty
+        expect(haystack_events).to be_empty
       end
     end
 
@@ -142,10 +142,10 @@ RSpec.describe Sentry do
       before do
         perform_basic_setup do |config|
           config.logger = Logger.new(string_io)
-          config.transport.transport_class = Sentry::HTTPTransport
+          config.transport.transport_class = Haystack::HTTPTransport
         end
 
-        Sentry.get_current_client.transport.rate_limits.merge!("error" => Time.now + 100)
+        Haystack.get_current_client.transport.rate_limits.merge!("error" => Time.now + 100)
       end
 
       it "stops the event and logs correct message" do
@@ -157,10 +157,10 @@ RSpec.describe Sentry do
   end
 
   describe ".send_event" do
-    let(:event) { Sentry.get_current_client.event_from_message("test message") }
+    let(:event) { Haystack.get_current_client.event_from_message("test message") }
 
     before do
-      Sentry.configuration.before_send = lambda do |event, hint|
+      Haystack.configuration.before_send = lambda do |event, hint|
         event.tags[:hint] = hint
         event
       end
@@ -169,14 +169,14 @@ RSpec.describe Sentry do
     it "sends the event" do
       described_class.send_event(event)
 
-      expect(sentry_events.count).to eq(1)
+      expect(haystack_events.count).to eq(1)
     end
 
     it "sends the event with hint" do
       described_class.send_event(event, { foo: "bar" })
 
-      expect(sentry_events.count).to eq(1)
-      event = last_sentry_event
+      expect(haystack_events.count).to eq(1)
+      event = last_haystack_event
       expect(event.tags[:hint][:foo]).to eq("bar")
     end
 
@@ -185,7 +185,7 @@ RSpec.describe Sentry do
 
       it "sends the event to spotlight too" do
         stub_request(build_fake_response("200")) do |request, http_obj|
-          expect(request["Content-Type"]).to eq("application/x-sentry-envelope")
+          expect(request["Content-Type"]).to eq("application/x-haystack-envelope")
           expect(request["Content-Encoding"]).to eq("gzip")
           expect(http_obj.address).to eq("localhost")
           expect(http_obj.port).to eq(8969)
@@ -205,7 +205,7 @@ RSpec.describe Sentry do
     it "sends the event via current hub" do
       expect do
         described_class.capture_event(event)
-      end.to change { sentry_events.count }.by(1)
+      end.to change { haystack_events.count }.by(1)
     end
   end
 
@@ -219,55 +219,55 @@ RSpec.describe Sentry do
 
     it "returns ErrorEvent" do
       event = described_class.capture_exception(exception)
-      expect(event).to be_a(Sentry::ErrorEvent)
+      expect(event).to be_a(Haystack::ErrorEvent)
     end
 
     it "sends the exception via current hub" do
       expect do
         described_class.capture_exception(exception)
-      end.to change { sentry_events.count }.by(1)
+      end.to change { haystack_events.count }.by(1)
     end
 
     it "doesn't send captured exception" do
       expect do
         described_class.capture_exception(exception)
-      end.to change { sentry_events.count }.by(1)
+      end.to change { haystack_events.count }.by(1)
 
       expect do
         described_class.capture_exception(exception)
-      end.to change { sentry_events.count }.by(0)
+      end.to change { haystack_events.count }.by(0)
     end
 
     it "doesn't do anything if the exception is excluded" do
-      Sentry.get_current_client.configuration.excluded_exceptions = ["ZeroDivisionError"]
+      Haystack.get_current_client.configuration.excluded_exceptions = ["ZeroDivisionError"]
 
       expect do
         described_class.capture_exception(exception)
-      end.to change { sentry_events.count }.by(0)
+      end.to change { haystack_events.count }.by(0)
     end
 
     it "passes ignore_exclusions hint" do
-      Sentry.get_current_client.configuration.excluded_exceptions = ["ZeroDivisionError"]
+      Haystack.get_current_client.configuration.excluded_exceptions = ["ZeroDivisionError"]
 
       expect do
         described_class.capture_exception(exception, hint: { ignore_exclusions: true })
-      end.to change { sentry_events.count }.by(1)
+      end.to change { haystack_events.count }.by(1)
     end
 
     describe 'mechanism' do
       it 'has default mechanism' do
         event = described_class.capture_exception(exception)
         mechanism = event.exception.values.first.mechanism
-        expect(mechanism).to be_a(Sentry::Mechanism)
+        expect(mechanism).to be_a(Haystack::Mechanism)
         expect(mechanism.type).to eq('generic')
         expect(mechanism.handled).to eq(true)
       end
 
       it 'has custom mechanism if passed' do
-        mech = Sentry::Mechanism.new(type: 'custom', handled: false)
+        mech = Haystack::Mechanism.new(type: 'custom', handled: false)
         event = described_class.capture_exception(exception, hint: { mechanism: mech })
         mechanism = event.exception.values.first.mechanism
-        expect(mechanism).to be_a(Sentry::Mechanism)
+        expect(mechanism).to be_a(Haystack::Mechanism)
         expect(mechanism.type).to eq('custom')
         expect(mechanism.handled).to eq(false)
       end
@@ -281,7 +281,7 @@ RSpec.describe Sentry do
           described_class.capture_exception(e)
         end
 
-        event = last_sentry_event.to_hash
+        event = last_haystack_event.to_hash
         last_frame = event.dig(:exception, :values, 0, :stacktrace, :frames).last
         expect(last_frame[:vars]).to eq(nil)
       end
@@ -295,7 +295,7 @@ RSpec.describe Sentry do
       end
 
       after do
-        Sentry.exception_locals_tp.disable
+        Haystack.exception_locals_tp.disable
       end
 
       it 'captures the exception with locals' do
@@ -307,7 +307,7 @@ RSpec.describe Sentry do
           described_class.capture_exception(e)
         end
 
-        event = last_sentry_event.to_hash
+        event = last_haystack_event.to_hash
         last_frame = event.dig(:exception, :values, 0, :stacktrace, :frames).last
         expect(last_frame[:vars]).to include({ a: "1", b: "0" })
       end
@@ -319,7 +319,7 @@ RSpec.describe Sentry do
       result = described_class.with_exception_captured { 2 }
 
       expect(result).to eq(2)
-      expect(sentry_events.count).to eq(0)
+      expect(haystack_events.count).to eq(0)
     end
 
     it "rescues and reports the exception happened inside the block" do
@@ -327,8 +327,8 @@ RSpec.describe Sentry do
         described_class.with_exception_captured(tags: { foo: "bar" }) { 1/0 }
       end.to raise_error(ZeroDivisionError)
 
-      expect(sentry_events.count).to eq(1)
-      expect(sentry_events.first.tags).to eq(foo: "bar")
+      expect(haystack_events.count).to eq(1)
+      expect(haystack_events.first.tags).to eq(foo: "bar")
     end
   end
 
@@ -343,12 +343,12 @@ RSpec.describe Sentry do
     it "sends the message via current hub" do
       expect do
         described_class.capture_message("Test", tags: { foo: "baz" })
-      end.to change { sentry_events.count }.by(1)
+      end.to change { haystack_events.count }.by(1)
     end
 
     it "returns ErrorEvent" do
       event = described_class.capture_message(message)
-      expect(event).to be_a(Sentry::ErrorEvent)
+      expect(event).to be_a(Haystack::ErrorEvent)
     end
   end
 
@@ -399,18 +399,18 @@ RSpec.describe Sentry do
         unsampled_trace = "d298e6b033f84659928a2267c3879aaa-2a35b8e9a1b974f4-0"
         not_sampled_trace = "d298e6b033f84659928a2267c3879aaa-2a35b8e9a1b974f4-"
 
-        transaction = Sentry.continue_trace({ "sentry-trace" => sampled_trace }, op: "rack.request", name: "/payment")
+        transaction = Haystack.continue_trace({ "haystack-trace" => sampled_trace }, op: "rack.request", name: "/payment")
         described_class.start_transaction(transaction: transaction)
 
         expect(transaction.sampled).to eq(true)
 
-        transaction = Sentry.continue_trace({ "sentry-trace" => unsampled_trace }, op: "rack.request", name: "/payment")
+        transaction = Haystack.continue_trace({ "haystack-trace" => unsampled_trace }, op: "rack.request", name: "/payment")
         described_class.start_transaction(transaction: transaction)
 
         expect(transaction.sampled).to eq(false)
 
         allow(Random).to receive(:rand).and_return(0.4)
-        transaction = Sentry.continue_trace({ "sentry-trace" => not_sampled_trace }, op: "rack.request", name: "/payment")
+        transaction = Haystack.continue_trace({ "haystack-trace" => not_sampled_trace }, op: "rack.request", name: "/payment")
         described_class.start_transaction(transaction: transaction)
 
         expect(transaction.sampled).to eq(true)
@@ -464,18 +464,18 @@ RSpec.describe Sentry do
 
     context "when tracing is enabled" do
       before do
-        Sentry.configuration.traces_sample_rate = 1.0
+        Haystack.configuration.traces_sample_rate = 1.0
       end
 
       it "starts a new transaction" do
         transaction = described_class.start_transaction(op: "foo")
-        expect(transaction).to be_a(Sentry::Transaction)
+        expect(transaction).to be_a(Haystack::Transaction)
         expect(transaction.op).to eq("foo")
       end
 
       context "when given an transaction object" do
         it "adds sample decision to it" do
-          transaction = Sentry::Transaction.new(hub: Sentry.get_current_hub)
+          transaction = Haystack::Transaction.new(hub: Haystack.get_current_hub)
 
           described_class.start_transaction(transaction: transaction)
 
@@ -484,11 +484,11 @@ RSpec.describe Sentry do
 
         it "provides proper sampling context to the traces_sampler" do
           context = nil
-          Sentry.configuration.traces_sampler = lambda do |sampling_context|
+          Haystack.configuration.traces_sampler = lambda do |sampling_context|
             context = sampling_context
           end
 
-          transaction = Sentry::Transaction.new(op: "foo", hub: Sentry.get_current_hub)
+          transaction = Haystack::Transaction.new(op: "foo", hub: Haystack.get_current_hub)
 
           described_class.start_transaction(transaction: transaction)
 
@@ -498,11 +498,11 @@ RSpec.describe Sentry do
 
         it "passes parent_sampled to the sampling_context" do
           context = nil
-          Sentry.configuration.traces_sampler = lambda do |sampling_context|
+          Haystack.configuration.traces_sampler = lambda do |sampling_context|
             context = sampling_context
           end
 
-          transaction = Sentry::Transaction.new(parent_sampled: true, hub: Sentry.get_current_hub)
+          transaction = Haystack::Transaction.new(parent_sampled: true, hub: Haystack.get_current_hub)
 
           described_class.start_transaction(transaction: transaction)
 
@@ -513,7 +513,7 @@ RSpec.describe Sentry do
       context "when given a custom_sampling_context" do
         it "takes that into account" do
           context = nil
-          Sentry.configuration.traces_sampler = lambda do |sampling_context|
+          Haystack.configuration.traces_sampler = lambda do |sampling_context|
             context = sampling_context
           end
 
@@ -529,8 +529,8 @@ RSpec.describe Sentry do
           ::Logger.new(string_io)
         end
         before do
-          Sentry.configuration.logger = logger
-          Sentry.configuration.enabled_environments = ["production"]
+          Haystack.configuration.logger = logger
+          Haystack.configuration.enabled_environments = ["production"]
         end
 
         it "sets @sampled to false and return" do
@@ -549,7 +549,7 @@ RSpec.describe Sentry do
       end
     end
 
-    context "when instrumenter is not :sentry" do
+    context "when instrumenter is not :haystack" do
       before do
         perform_basic_setup do |config|
           config.traces_sample_rate = 1.0
@@ -563,7 +563,7 @@ RSpec.describe Sentry do
 
       it "creates transaction with explicit instrumenter" do
         transaction = described_class.start_transaction(op: "foo", instrumenter: :otel)
-        expect(transaction).to be_a(Sentry::Transaction)
+        expect(transaction).to be_a(Haystack::Transaction)
       end
     end
   end
@@ -592,8 +592,8 @@ RSpec.describe Sentry do
 
     context "when the current span is present" do
       let(:parent_span) do
-        transaction = Sentry::Transaction.new(op: "foo", hub: Sentry.get_current_hub)
-        Sentry::Span.new(op: "parent", transaction: transaction)
+        transaction = Haystack::Transaction.new(op: "foo", hub: Haystack.get_current_hub)
+        Haystack::Span.new(op: "parent", transaction: transaction)
       end
 
       before do
@@ -613,7 +613,7 @@ RSpec.describe Sentry do
         expect(child_span.timestamp).to be_a(Float)
       end
 
-      context "when instrumenter is not :sentry" do
+      context "when instrumenter is not :haystack" do
         before do
           perform_basic_setup do |config|
             config.traces_sample_rate = 1.0
@@ -664,18 +664,18 @@ RSpec.describe Sentry do
 
   describe ".add_breadcrumb" do
     it "adds breadcrumb to the current scope" do
-      crumb = Sentry::Breadcrumb.new(message: "foo")
+      crumb = Haystack::Breadcrumb.new(message: "foo")
       described_class.add_breadcrumb(crumb)
 
       expect(described_class.get_current_scope.breadcrumbs.peek).to eq(crumb)
     end
 
     it "triggers before_breadcrumb callback" do
-      Sentry.configuration.before_breadcrumb = lambda do |breadcrumb, hint|
+      Haystack.configuration.before_breadcrumb = lambda do |breadcrumb, hint|
         nil
       end
 
-      crumb = Sentry::Breadcrumb.new(message: "foo")
+      crumb = Haystack::Breadcrumb.new(message: "foo")
 
       described_class.add_breadcrumb(crumb)
 
@@ -756,7 +756,7 @@ RSpec.describe Sentry do
 
       expect { attachment.payload }
         .to raise_error(
-          Sentry::Attachment::PathNotFoundError,
+          Haystack::Attachment::PathNotFoundError,
             "Failed to read attachment file, file not found: /not-here/oops"
           )
     end
@@ -768,9 +768,9 @@ RSpec.describe Sentry do
 
   describe ".csp_report_uri" do
     it "returns the csp_report_uri generated from the main Configuration" do
-      expect(Sentry.configuration).to receive(:csp_report_uri).and_call_original
+      expect(Haystack.configuration).to receive(:csp_report_uri).and_call_original
 
-      expect(described_class.csp_report_uri).to eq("http://sentry.localdomain/api/42/security/?sentry_key=12345&sentry_environment=development")
+      expect(described_class.csp_report_uri).to eq("http://haystack.localdomain/api/42/security/?haystack_key=12345&haystack_environment=development")
     end
   end
 
@@ -791,18 +791,18 @@ RSpec.describe Sentry do
       traceparent = described_class.get_traceparent
       propagation_context = described_class.get_current_scope.propagation_context
 
-      expect(traceparent).to match(Sentry::PropagationContext::SENTRY_TRACE_REGEXP)
+      expect(traceparent).to match(Haystack::PropagationContext::HAYSTACK_TRACE_REGEXP)
       expect(traceparent).to eq("#{propagation_context.trace_id}-#{propagation_context.span_id}")
     end
 
     it "returns a valid traceparent header from scope current span" do
-      transaction = Sentry::Transaction.new(op: "foo", hub: Sentry.get_current_hub, sampled: true)
+      transaction = Haystack::Transaction.new(op: "foo", hub: Haystack.get_current_hub, sampled: true)
       span = transaction.start_child(op: "parent")
       described_class.get_current_scope.set_span(span)
 
       traceparent = described_class.get_traceparent
 
-      expect(traceparent).to match(Sentry::PropagationContext::SENTRY_TRACE_REGEXP)
+      expect(traceparent).to match(Haystack::PropagationContext::HAYSTACK_TRACE_REGEXP)
       expect(traceparent).to eq("#{span.trace_id}-#{span.span_id}-1")
     end
   end
@@ -812,33 +812,33 @@ RSpec.describe Sentry do
       baggage = described_class.get_baggage
       propagation_context = described_class.get_current_scope.propagation_context
 
-      expect(baggage).to eq("sentry-trace_id=#{propagation_context.trace_id},sentry-environment=development,sentry-public_key=12345")
+      expect(baggage).to eq("haystack-trace_id=#{propagation_context.trace_id},haystack-environment=development,haystack-public_key=12345")
     end
 
     it "returns a valid baggage header from scope current span" do
-      transaction = Sentry::Transaction.new(op: "foo", hub: Sentry.get_current_hub, sampled: true)
+      transaction = Haystack::Transaction.new(op: "foo", hub: Haystack.get_current_hub, sampled: true)
       span = transaction.start_child(op: "parent")
       described_class.get_current_scope.set_span(span)
 
       baggage = described_class.get_baggage
 
-      expect(baggage).to eq("sentry-trace_id=#{span.trace_id},sentry-sampled=true,sentry-environment=development,sentry-public_key=12345")
+      expect(baggage).to eq("haystack-trace_id=#{span.trace_id},haystack-sampled=true,haystack-environment=development,haystack-public_key=12345")
     end
   end
 
   describe ".get_trace_propagation_headers" do
-    it "returns a Hash of sentry-trace and baggage" do
+    it "returns a Hash of haystack-trace and baggage" do
       expect(described_class.get_trace_propagation_headers).to eq({
-        "sentry-trace" => described_class.get_traceparent,
+        "haystack-trace" => described_class.get_traceparent,
         "baggage" => described_class.get_baggage
       })
     end
   end
 
   describe ".get_trace_propagation_meta" do
-    it "returns meta tags for sentry-trace and baggage" do
+    it "returns meta tags for haystack-trace and baggage" do
       meta = <<~META
-      <meta name="sentry-trace" content="#{described_class.get_traceparent}">
+      <meta name="haystack-trace" content="#{described_class.get_traceparent}">
       <meta name="baggage" content="#{described_class.get_baggage}">
       META
 
@@ -847,7 +847,7 @@ RSpec.describe Sentry do
   end
 
   describe ".continue_trace" do
-    context "without incoming sentry trace" do
+    context "without incoming haystack trace" do
       let(:env) { { "HTTP_FOO" => "bar" } }
 
       it "returns nil with tracing disabled" do
@@ -855,24 +855,24 @@ RSpec.describe Sentry do
       end
 
       it "returns nil with tracing enabled" do
-        Sentry.configuration.traces_sample_rate = 1.0
+        Haystack.configuration.traces_sample_rate = 1.0
         expect(described_class.continue_trace(env)).to eq(nil)
       end
 
       it "sets new propagation context on scope" do
-        expect(Sentry.get_current_scope).to receive(:generate_propagation_context).and_call_original
+        expect(Haystack.get_current_scope).to receive(:generate_propagation_context).and_call_original
         described_class.continue_trace(env)
 
-        propagation_context = Sentry.get_current_scope.propagation_context
+        propagation_context = Haystack.get_current_scope.propagation_context
         expect(propagation_context.incoming_trace).to eq(false)
       end
     end
 
-    context "with incoming sentry trace" do
-      let(:incoming_prop_context) { Sentry::PropagationContext.new(Sentry::Scope.new) }
+    context "with incoming haystack trace" do
+      let(:incoming_prop_context) { Haystack::PropagationContext.new(Haystack::Scope.new) }
       let(:env) do
         {
-          "HTTP_SENTRY_TRACE" => incoming_prop_context.get_traceparent,
+          "HTTP_HAYSTACK_TRACE" => incoming_prop_context.get_traceparent,
           "HTTP_BAGGAGE" => incoming_prop_context.get_baggage.serialize
         }
       end
@@ -882,10 +882,10 @@ RSpec.describe Sentry do
       end
 
       it "sets new propagation context from env on scope" do
-        expect(Sentry.get_current_scope).to receive(:generate_propagation_context).and_call_original
+        expect(Haystack.get_current_scope).to receive(:generate_propagation_context).and_call_original
         described_class.continue_trace(env)
 
-        propagation_context = Sentry.get_current_scope.propagation_context
+        propagation_context = Haystack.get_current_scope.propagation_context
         expect(propagation_context.incoming_trace).to eq(true)
         expect(propagation_context.trace_id).to eq(incoming_prop_context.trace_id)
         expect(propagation_context.parent_span_id).to eq(incoming_prop_context.span_id)
@@ -895,10 +895,10 @@ RSpec.describe Sentry do
       end
 
       it "returns new Transaction with tracing enabled" do
-        Sentry.configuration.traces_sample_rate = 1.0
+        Haystack.configuration.traces_sample_rate = 1.0
 
         transaction = described_class.continue_trace(env, name: "foobar")
-        expect(transaction).to be_a(Sentry::Transaction)
+        expect(transaction).to be_a(Haystack::Transaction)
         expect(transaction.name).to eq("foobar")
         expect(transaction.trace_id).to eq(incoming_prop_context.trace_id)
         expect(transaction.parent_span_id).to eq(incoming_prop_context.span_id)
@@ -909,11 +909,11 @@ RSpec.describe Sentry do
   end
 
   describe 'release detection' do
-    let(:fake_root) { "/tmp/sentry/" }
+    let(:fake_root) { "/tmp/haystack/" }
 
     before do
-      allow_any_instance_of(Sentry::Configuration).to receive(:project_root).and_return(fake_root)
-      ENV["SENTRY_DSN"] = Sentry::TestHelper::DUMMY_DSN
+      allow_any_instance_of(Haystack::Configuration).to receive(:project_root).and_return(fake_root)
+      ENV["HAYSTACK_DSN"] = Haystack::TestHelper::DUMMY_DSN
     end
 
     it 'defaults to nil' do
@@ -929,33 +929,33 @@ RSpec.describe Sentry do
       expect(described_class.configuration.release).to eq("foo")
     end
 
-    it 'uses `SENTRY_RELEASE` env variable' do
-      ENV['SENTRY_RELEASE'] = 'v1'
+    it 'uses `HAYSTACK_RELEASE` env variable' do
+      ENV['HAYSTACK_RELEASE'] = 'v1'
 
       described_class.init
       expect(described_class.configuration.release).to eq('v1')
 
-      ENV.delete('SENTRY_CURRENT_ENV')
+      ENV.delete('HAYSTACK_CURRENT_ENV')
     end
 
     context "when the DSN is not set" do
       before do
-        ENV.delete("SENTRY_DSN")
+        ENV.delete("HAYSTACK_DSN")
       end
 
       it "doesn't detect release" do
-        ENV['SENTRY_RELEASE'] = 'v1'
+        ENV['HAYSTACK_RELEASE'] = 'v1'
 
         described_class.init
         expect(described_class.configuration.release).to eq(nil)
 
-        ENV.delete('SENTRY_CURRENT_ENV')
+        ENV.delete('HAYSTACK_CURRENT_ENV')
       end
     end
 
     context "when the SDK is not enabled under the current env" do
       it "doesn't detect release" do
-        ENV['SENTRY_RELEASE'] = 'v1'
+        ENV['HAYSTACK_RELEASE'] = 'v1'
 
         described_class.init do |config|
           config.enabled_environments = "production"
@@ -963,7 +963,7 @@ RSpec.describe Sentry do
 
         expect(described_class.configuration.release).to eq(nil)
 
-        ENV.delete('SENTRY_CURRENT_ENV')
+        ENV.delete('HAYSTACK_CURRENT_ENV')
       end
     end
 
@@ -973,7 +973,7 @@ RSpec.describe Sentry do
         allow(File).to receive(:directory?).with(".git").and_return(true)
       end
       it 'gets release from git' do
-        allow(Sentry).to receive(:`).with("git rev-parse HEAD 2>&1").and_return("COMMIT_SHA")
+        allow(Haystack).to receive(:`).with("git rev-parse HEAD 2>&1").and_return("COMMIT_SHA")
 
         described_class.init
         expect(described_class.configuration.release).to eq('COMMIT_SHA')
@@ -1061,7 +1061,7 @@ RSpec.describe Sentry do
           end
 
           expect(described_class.configuration.release).to eq(nil)
-          expect(string_io.string).to include(Sentry::Configuration::HEROKU_DYNO_METADATA_MESSAGE)
+          expect(string_io.string).to include(Haystack::Configuration::HEROKU_DYNO_METADATA_MESSAGE)
         end
 
         it "returns HEROKU_SLUG_COMMIT" do
@@ -1080,13 +1080,13 @@ RSpec.describe Sentry do
         it "logs the error" do
           string_io = StringIO.new
           logger = Logger.new(string_io)
-          allow(Sentry::ReleaseDetector).to receive(:detect_release_from_git).and_raise(TypeError.new)
+          allow(Haystack::ReleaseDetector).to receive(:detect_release_from_git).and_raise(TypeError.new)
 
           described_class.init do |config|
             config.logger = logger
           end
 
-          expect(string_io.string).to include("ERROR -- sentry: Error detecting release: TypeError")
+          expect(string_io.string).to include("ERROR -- haystack: Error detecting release: TypeError")
         end
       end
     end
@@ -1101,13 +1101,13 @@ RSpec.describe Sentry do
       end
 
       it "removes main hub" do
-        expect(described_class.get_main_hub).to be_a(Sentry::Hub)
+        expect(described_class.get_main_hub).to be_a(Haystack::Hub)
         described_class.close
         expect(described_class.get_main_hub).to eq(nil)
       end
 
       it "removes thread local" do
-        expect(Thread.current.thread_variable_get(described_class::THREAD_LOCAL)).to be_a(Sentry::Hub)
+        expect(Thread.current.thread_variable_get(described_class::THREAD_LOCAL)).to be_a(Haystack::Hub)
         described_class.close
         expect(Thread.current.thread_variable_get(described_class::THREAD_LOCAL)).to eq(nil)
       end
@@ -1161,7 +1161,7 @@ RSpec.describe Sentry do
     it "can reinitialize closed SDK" do
       perform_basic_setup
 
-      transport = Sentry.get_current_client.transport
+      transport = Haystack.get_current_client.transport
 
       expect do
         described_class.capture_event(event)

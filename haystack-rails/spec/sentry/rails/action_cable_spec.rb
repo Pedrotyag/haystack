@@ -40,11 +40,11 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
     end
   end
 
-  RSpec.describe "without Sentry initialized" do
+  RSpec.describe "without Haystack initialized" do
     before do
-      allow(Sentry).to receive(:get_main_hub).and_return(nil)
+      allow(Haystack).to receive(:get_main_hub).and_return(nil)
       make_basic_app
-      Sentry.clone_hub_to_current_thread # make sure the thread doesn't set a hub
+      Haystack.clone_hub_to_current_thread # make sure the thread doesn't set a hub
     end
 
     describe ChatChannel, type: :channel do
@@ -66,8 +66,8 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
     end
   end
 
-  RSpec.describe "Sentry::Rails::ActionCableExtensions", type: :channel do
-    let(:transport) { Sentry.get_current_client.transport }
+  RSpec.describe "Haystack::Rails::ActionCableExtensions", type: :channel do
+    let(:transport) { Haystack.get_current_client.transport }
 
     after do
       transport.events = []

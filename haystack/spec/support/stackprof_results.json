@@ -16,21 +16,21 @@
     },
     "140370222379560": {
       "name": "Bar::Foo.foo",
-      "file": "<dir>/spec/sentry/profiler_spec.rb",
+      "file": "<dir>/spec/haystack/profiler_spec.rb",
       "line": 7,
       "total_samples": 5,
       "samples": 2
     },
     "140370222379480": {
       "name": "Bar.bar",
-      "file": "<dir>/spec/sentry/profiler_spec.rb",
+      "file": "<dir>/spec/haystack/profiler_spec.rb",
       "line": 12,
       "total_samples": 15,
       "samples": 0
     },
     "140370262463760": {
       "name": "block (4 levels) in <top (required)>",
-      "file": "<dir>/spec/sentry/profiler_spec.rb",
+      "file": "<dir>/spec/haystack/profiler_spec.rb",
       "line": 169,
       "total_samples": 15,
       "samples": 0

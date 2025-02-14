@@ -2,9 +2,9 @@
 
 require "spec_helper"
 
-RSpec.describe Sentry::Rails::Tracing::ActiveRecordSubscriber, :subscriber do
+RSpec.describe Haystack::Rails::Tracing::ActiveRecordSubscriber, :subscriber do
   let(:transport) do
-    Sentry.get_current_client.transport
+    Haystack.get_current_client.transport
   end
 
   context "when transaction is sampled" do
@@ -21,8 +21,8 @@ RSpec.describe Sentry::Rails::Tracing::ActiveRecordSubscriber, :subscriber do
     end
 
     it "records database query events" do
-      transaction = Sentry::Transaction.new(sampled: true, hub: Sentry.get_current_hub)
-      Sentry.get_current_scope.set_span(transaction)
+      transaction = Haystack::Transaction.new(sampled: true, hub: Haystack.get_current_hub)
+      Haystack.get_current_scope.set_span(transaction)
 
       Post.all.to_a
 
@@ -54,8 +54,8 @@ RSpec.describe Sentry::Rails::Tracing::ActiveRecordSubscriber, :subscriber do
       rspec_class = self.name # RSpec::ExampleGroups::[....]
 
       before do
-        transaction = Sentry::Transaction.new(sampled: true, hub: Sentry.get_current_hub)
-        Sentry.get_current_scope.set_span(transaction)
+        transaction = Haystack::Transaction.new(sampled: true, hub: Haystack.get_current_hub)
+        Haystack.get_current_scope.set_span(transaction)
 
         foo
 
@@ -121,8 +121,8 @@ RSpec.describe Sentry::Rails::Tracing::ActiveRecordSubscriber, :subscriber do
     end
 
     it "records database cached query events", skip: Rails.version.to_f < 5.1 do
-      transaction = Sentry::Transaction.new(sampled: true, hub: Sentry.get_current_hub)
-      Sentry.get_current_scope.set_span(transaction)
+      transaction = Haystack::Transaction.new(sampled: true, hub: Haystack.get_current_hub)
+      Haystack.get_current_scope.set_span(transaction)
 
       ActiveRecord::Base.connection.cache do
         Post.all.to_a
@@ -155,8 +155,8 @@ RSpec.describe Sentry::Rails::Tracing::ActiveRecordSubscriber, :subscriber do
     end
 
     it "doesn't record spans" do
-      transaction = Sentry::Transaction.new(sampled: false, hub: Sentry.get_current_hub)
-      Sentry.get_current_scope.set_span(transaction)
+      transaction = Haystack::Transaction.new(sampled: false, hub: Haystack.get_current_hub)
+      Haystack.get_current_scope.set_span(transaction)
 
       Post.all.to_a
 

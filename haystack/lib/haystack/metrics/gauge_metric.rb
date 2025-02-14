@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Sentry
+module Haystack
   module Metrics
     class GaugeMetric < Metric
       attr_reader :last, :min, :max, :sum, :count

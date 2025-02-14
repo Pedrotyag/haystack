@@ -3,9 +3,9 @@
 source "https://rubygems.org"
 git_source(:github) { |name| "https://github.com/#{name}.git" }
 
-# Specify your gem's dependencies in sentry-ruby.gemspec
+# Specify your gem's dependencies in haystack.gemspec
 gemspec
-gem "sentry-ruby", path: "../sentry-ruby"
+# gem "haystack", path: "../haystack"
 
 platform :jruby do
   gem "activerecord-jdbcmysql-adapter"

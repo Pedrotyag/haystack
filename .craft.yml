@@ -2,22 +2,16 @@ minVersion: '1.8.1'
 changelogPolicy: simple
 preReleaseCommand: ruby .scripts/batch_release.rb
 requireNames:
-  - /^sentry-ruby-.*\.gem$/
-  - /^sentry-ruby-core-.*\.gem$/
-  - /^sentry-rails-.*\.gem$/
-  - /^sentry-sidekiq-.*\.gem$/
-  - /^sentry-resque-.*\.gem$/
-  - /^sentry-delayed_job-.*\.gem$/
-  - /^sentry-opentelemetry-.*\.gem$/
+  - /^haystack-ruby-.*\.gem$/
+  - /^haystack-ruby-core-.*\.gem$/
+  - /^haystack-rails-.*\.gem$/
+  - /^haystack-sidekiq-.*\.gem$/
 targets:
     - name: gem
     - name: registry
       sdks:
-        'gem:sentry-ruby':
-        'gem:sentry-ruby-core':
-        'gem:sentry-rails':
-        'gem:sentry-sidekiq':
-        'gem:sentry-delayed_job':
-        'gem:sentry-opentelemetry':
-        'gem:sentry-resque':
+        'gem:haystack-ruby':
+        'gem:haystack-ruby-core':
+        'gem:haystack-rails':
+        'gem:haystack-sidekiq':
     - name: github

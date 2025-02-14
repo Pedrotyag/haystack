@@ -2,11 +2,11 @@
 
 require "cgi"
 
-module Sentry
+module Haystack
   # A {https://www.w3.org/TR/baggage W3C Baggage Header} implementation.
   class Baggage
-    SENTRY_PREFIX = "sentry-"
-    SENTRY_PREFIX_REGEX = /^sentry-/
+    HAYSTACK_PREFIX = "haystack-"
+    HAYSTACK_PREFIX_REGEX = /^haystack-/
 
     # @return [Hash]
     attr_reader :items
@@ -21,8 +21,8 @@ module Sentry
 
     # Creates a Baggage object from an incoming W3C Baggage header string.
     #
-    # Sentry items are identified with the 'sentry-' prefix and stored in a hash.
-    # The presence of a Sentry item makes the baggage object immutable.
+    # Haystack items are identified with the 'haystack-' prefix and stored in a hash.
+    # The presence of a Haystack item makes the baggage object immutable.
     #
     # @param header [String] The incoming Baggage header string.
     # @return [Baggage, nil]
@@ -35,7 +35,7 @@ module Sentry
         key, val = item.split("=")
 
         next unless key && val
-        next unless key =~ SENTRY_PREFIX_REGEX
+        next unless key =~ HAYSTACK_PREFIX_REGEX
 
         baggage_key = key.split("-")[1]
         next unless baggage_key
@@ -53,7 +53,7 @@ module Sentry
       @mutable = false
     end
 
-    # A {https://develop.sentry.dev/sdk/performance/dynamic-sampling-context/#envelope-header Dynamic Sampling Context}
+    # A {https://develop.haystack.dev/sdk/performance/dynamic-sampling-context/#envelope-header Dynamic Sampling Context}
     # hash to be used in the trace envelope header.
     # @return [Hash]
     def dynamic_sampling_context
@@ -63,7 +63,7 @@ module Sentry
     # Serialize the Baggage object back to a string.
     # @return [String]
     def serialize
-      items = @items.map { |k, v| "#{SENTRY_PREFIX}#{CGI.escape(k)}=#{CGI.escape(v)}" }
+      items = @items.map { |k, v| "#{HAYSTACK_PREFIX}#{CGI.escape(k)}=#{CGI.escape(v)}" }
       items.join(",")
     end
   end

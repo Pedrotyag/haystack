@@ -2,7 +2,7 @@
 
 return unless defined?(Puma::Server)
 
-module Sentry
+module Haystack
   module Puma
     module Server
       PUMA_4_AND_PRIOR = Gem::Version.new(::Puma::Const::PUMA_VERSION) < Gem::Version.new("5.0.0")
@@ -16,7 +16,7 @@ module Sentry
           end
 
         begin
-          Sentry.capture_exception(e) do |scope|
+          Haystack.capture_exception(e) do |scope|
             scope.set_rack_env(env)
           end
         rescue
@@ -29,4 +29,4 @@ module Sentry
   end
 end
 
-Sentry.register_patch(:puma, Sentry::Puma::Server, Puma::Server)
+Haystack.register_patch(:puma, Haystack::Puma::Server, Puma::Server)

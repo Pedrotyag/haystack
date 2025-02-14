@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
-RSpec::Matchers.define :include_sentry_event do |event_message = "", **opts|
-  match do |sentry_events|
+RSpec::Matchers.define :include_haystack_event do |event_message = "", **opts|
+  match do |haystack_events|
     @expected_exception = expected_exception(**opts)
     @context = context(**opts)
     @tags = tags(**opts)
 
     @expected_event = expected_event(event_message)
-    @matched_event = find_matched_event(event_message, sentry_events)
+    @matched_event = find_matched_event(event_message, haystack_events)
 
     return false unless @matched_event
 
@@ -22,7 +22,7 @@ RSpec::Matchers.define :include_sentry_event do |event_message = "", **opts|
     @tags = tags
   end
 
-  failure_message do |sentry_events|
+  failure_message do |haystack_events|
     info = ["Failed to find event matching:\n"]
     info << "  message: #{@expected_event.message.inspect}"
     info << "  exception: #{@expected_exception.inspect}"
@@ -30,15 +30,15 @@ RSpec::Matchers.define :include_sentry_event do |event_message = "", **opts|
     info << "  tags: #{@tags.inspect}"
     info << "\n"
     info << "Captured events:\n"
-    info << dump_events(sentry_events)
+    info << dump_events(haystack_events)
     info.join("\n")
   end
 
   def expected_event(event_message)
     if @expected_exception
-      Sentry.get_current_client.event_from_exception(@expected_exception)
+      Haystack.get_current_client.event_from_exception(@expected_exception)
     else
-      Sentry.get_current_client.event_from_message(event_message)
+      Haystack.get_current_client.event_from_message(event_message)
     end
   end
 
@@ -54,8 +54,8 @@ RSpec::Matchers.define :include_sentry_event do |event_message = "", **opts|
     opts.fetch(:tags, @tags || {})
   end
 
-  def find_matched_event(event_message, sentry_events)
-    @matched_event ||= sentry_events
+  def find_matched_event(event_message, haystack_events)
+    @matched_event ||= haystack_events
       .find { |event|
         if @expected_exception
           # Is it OK that we only compare the first exception?
@@ -69,8 +69,8 @@ RSpec::Matchers.define :include_sentry_event do |event_message = "", **opts|
       }
   end
 
-  def dump_events(sentry_events)
-    sentry_events.map(&Kernel.method(:Hash)).map do |hash|
+  def dump_events(haystack_events)
+    haystack_events.map(&Kernel.method(:Hash)).map do |hash|
       hash.select { |k, _| [:message, :contexts, :tags, :exception].include?(k) }
     end.map do |hash|
       JSON.pretty_generate(hash)

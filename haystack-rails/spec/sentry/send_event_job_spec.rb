@@ -3,12 +3,12 @@
 require "active_job"
 require "spec_helper"
 
-RSpec.describe "Sentry::SendEventJob" do
+RSpec.describe "Haystack::SendEventJob" do
   let(:event) do
-    Sentry.get_current_client.event_from_message("test message")
+    Haystack.get_current_client.event_from_message("test message")
   end
   let(:transport) do
-    Sentry.get_current_client.transport
+    Haystack.get_current_client.transport
   end
 
   context "when ActiveJob is not loaded" do
@@ -24,7 +24,7 @@ RSpec.describe "Sentry::SendEventJob" do
     end
 
     it "gets defined as a blank class" do
-      expect(Sentry::SendEventJob.superclass).to eq(Object)
+      expect(Haystack::SendEventJob.superclass).to eq(Object)
     end
   end
 
@@ -33,15 +33,15 @@ RSpec.describe "Sentry::SendEventJob" do
       reload_send_event_job
     end
 
-    it "reports events to Sentry" do
+    it "reports events to Haystack" do
       make_basic_app
 
-      Sentry.configuration.before_send = lambda do |event, hint|
+      Haystack.configuration.before_send = lambda do |event, hint|
         event.tags[:hint] = hint
         event
       end
 
-      Sentry::SendEventJob.perform_now(event, { foo: "bar" })
+      Haystack::SendEventJob.perform_now(event, { foo: "bar" })
 
       expect(transport.events.count).to eq(1)
       event = transport.events.first
@@ -54,7 +54,7 @@ RSpec.describe "Sentry::SendEventJob" do
         config.traces_sample_rate = 1.0
       end
 
-      Sentry::SendEventJob.perform_now(event)
+      Haystack::SendEventJob.perform_now(event)
 
       expect(transport.events.count).to eq(1)
       event = transport.events.first
@@ -66,7 +66,7 @@ RSpec.describe "Sentry::SendEventJob" do
         make_basic_app
       end
       it "uses ActiveJob::Base as the parent class" do
-        expect(Sentry::SendEventJob.superclass).to eq(ActiveJob::Base)
+        expect(Haystack::SendEventJob.superclass).to eq(ActiveJob::Base)
       end
     end
 
@@ -82,7 +82,7 @@ RSpec.describe "Sentry::SendEventJob" do
       end
 
       it "uses ApplicationJob as the parent class" do
-        expect(Sentry::SendEventJob.superclass).to eq(ApplicationJob)
+        expect(Haystack::SendEventJob.superclass).to eq(ApplicationJob)
       end
     end
 
@@ -98,7 +98,7 @@ RSpec.describe "Sentry::SendEventJob" do
       end
 
       it "uses ActiveJob::Base as the parent class" do
-        expect(Sentry::SendEventJob.superclass).to eq(ActiveJob::Base)
+        expect(Haystack::SendEventJob.superclass).to eq(ActiveJob::Base)
       end
     end
   end

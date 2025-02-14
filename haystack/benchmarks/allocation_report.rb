@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
 require 'benchmark/ipsa'
-require "sentry-ruby"
-require "sentry/benchmarks/benchmark_transport"
+require "haystack"
+require "haystack/benchmarks/benchmark_transport"
 
-Sentry.init do |config|
+Haystack.init do |config|
   config.logger = ::Logger.new(nil)
-  config.dsn = "dummy://12345:67890@sentry.localdomain:3000/sentry/42"
-  config.transport.transport_class = Sentry::BenchmarkTransport
-  config.breadcrumbs_logger = [:sentry_logger]
+  config.dsn = "dummy://12345:67890@haystack.localdomain:3000/haystack/42"
+  config.transport.transport_class = Haystack::BenchmarkTransport
+  config.breadcrumbs_logger = [:haystack_logger]
 end
 
 exception = begin
@@ -17,10 +17,10 @@ exception = begin
               exp
             end
 
-Sentry.capture_exception(exception)
+Haystack.capture_exception(exception)
 
 report = MemoryProfiler.report do
-  Sentry.capture_exception(exception)
+  Haystack.capture_exception(exception)
 end
 
 report.pretty_print

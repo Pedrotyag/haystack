@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Sentry
+module Haystack
   class Interface
     # @return [Hash]
     def to_hash
@@ -9,9 +9,9 @@ module Sentry
   end
 end
 
-require "sentry/interfaces/exception"
-require "sentry/interfaces/request"
-require "sentry/interfaces/single_exception"
-require "sentry/interfaces/stacktrace"
-require "sentry/interfaces/threads"
-require "sentry/interfaces/mechanism"
+require "haystack/interfaces/exception"
+require "haystack/interfaces/request"
+require "haystack/interfaces/single_exception"
+require "haystack/interfaces/stacktrace"
+require "haystack/interfaces/threads"
+require "haystack/interfaces/mechanism"

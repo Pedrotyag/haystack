@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 require "securerandom"
-require "sentry/cron/monitor_config"
+require "haystack/cron/monitor_config"
 
-module Sentry
+module Haystack
   class CheckInEvent < Event
     TYPE = "check_in"
 

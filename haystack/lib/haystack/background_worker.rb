@@ -4,12 +4,12 @@ require "concurrent/executor/thread_pool_executor"
 require "concurrent/executor/immediate_executor"
 require "concurrent/configuration"
 
-module Sentry
+module Haystack
   class BackgroundWorker
     include LoggingHelper
 
     attr_reader :max_queue, :number_of_threads
-    # @deprecated Use Sentry.logger to retrieve the current logger instead.
+    # @deprecated Use Haystack.logger to retrieve the current logger instead.
     attr_reader :logger
     attr_accessor :shutdown_timeout
 
@@ -31,7 +31,7 @@ module Sentry
           log_debug("config.background_worker_threads is set to 0, all events will be sent synchronously")
           Concurrent::ImmediateExecutor.new
         else
-          log_debug("Initializing the Sentry background worker with #{@number_of_threads} threads")
+          log_debug("Initializing the Haystack background worker with #{@number_of_threads} threads")
 
           executor = Concurrent::ThreadPoolExecutor.new(
             min_threads: 0,

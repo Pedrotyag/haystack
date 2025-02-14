@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Sentry
+module Haystack
   # TransactionEvent represents events that carry transaction data (type: "transaction").
   class TransactionEvent < Event
     TYPE = "transaction"

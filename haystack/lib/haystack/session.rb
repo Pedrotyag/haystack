@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Sentry
+module Haystack
   class Session
     attr_reader :started, :status, :aggregation_key
 
@@ -9,7 +9,7 @@ module Sentry
     AGGREGATE_STATUSES = %i[errored exited]
 
     def initialize
-      @started = Sentry.utc_now
+      @started = Haystack.utc_now
       @status = :ok
 
       # truncate seconds from the timestamp since we only care about

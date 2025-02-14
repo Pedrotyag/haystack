@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Sentry
+module Haystack
   # @api private
   class Envelope::Item
     STACKTRACE_FRAME_LIMIT_ON_OVERSIZED_PAYLOAD = 500

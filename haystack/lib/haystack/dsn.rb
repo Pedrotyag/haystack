@@ -2,7 +2,7 @@
 
 require "uri"
 
-module Sentry
+module Haystack
   class DSN
     PORT_MAP = { "http" => 80, "https" => 443 }.freeze
     REQUIRED_ATTRIBUTES = %w[host path public_key project_id].freeze
@@ -43,7 +43,7 @@ module Sentry
     end
 
     def csp_report_uri
-      "#{server}/api/#{project_id}/security/?sentry_key=#{public_key}"
+      "#{server}/api/#{project_id}/security/?haystack_key=#{public_key}"
     end
 
     def envelope_endpoint

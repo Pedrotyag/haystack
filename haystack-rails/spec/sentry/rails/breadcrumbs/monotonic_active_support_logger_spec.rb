@@ -3,21 +3,21 @@
 require "spec_helper"
 
 
-RSpec.describe "Sentry::Breadcrumbs::MonotonicActiveSupportLogger", type: :request do
+RSpec.describe "Haystack::Breadcrumbs::MonotonicActiveSupportLogger", type: :request do
   after do
     # even though we cleanup breadcrumbs in the rack middleware
     # Breadcrumbs::MonotonicActiveSupportLogger subscribes to "every" instrumentation
     # so it'll create other instrumentations "after" the request is finished
     # and we should clear those as well
-    Sentry.get_current_scope.clear_breadcrumbs
+    Haystack.get_current_scope.clear_breadcrumbs
   end
 
   let(:transport) do
-    Sentry.get_current_client.transport
+    Haystack.get_current_client.transport
   end
 
   let(:breadcrumb_buffer) do
-    Sentry.get_current_scope.breadcrumbs
+    Haystack.get_current_scope.breadcrumbs
   end
 
   let(:event) do
@@ -25,8 +25,8 @@ RSpec.describe "Sentry::Breadcrumbs::MonotonicActiveSupportLogger", type: :reque
   end
   context "without tracing" do
     before do
-      make_basic_app do |sentry_config|
-        sentry_config.breadcrumbs_logger = [:monotonic_active_support_logger]
+      make_basic_app do |haystack_config|
+        haystack_config.breadcrumbs_logger = [:monotonic_active_support_logger]
       end
     end
 
@@ -41,7 +41,7 @@ RSpec.describe "Sentry::Breadcrumbs::MonotonicActiveSupportLogger", type: :reque
 
     context "given a Rails version >= 6.1", skip: Rails.version.to_f < 6.1 do
       after do
-        Sentry::Rails::Breadcrumb::MonotonicActiveSupportLogger.detach
+        Haystack::Rails::Breadcrumb::MonotonicActiveSupportLogger.detach
       end
 
       it "captures correct data of exception requests" do
@@ -85,9 +85,9 @@ RSpec.describe "Sentry::Breadcrumbs::MonotonicActiveSupportLogger", type: :reque
 
   context "with tracing" do
     before do
-      make_basic_app do |sentry_config|
-        sentry_config.breadcrumbs_logger = [:monotonic_active_support_logger]
-        sentry_config.traces_sample_rate = 1.0
+      make_basic_app do |haystack_config|
+        haystack_config.breadcrumbs_logger = [:monotonic_active_support_logger]
+        haystack_config.traces_sample_rate = 1.0
       end
     end
 
@@ -102,7 +102,7 @@ RSpec.describe "Sentry::Breadcrumbs::MonotonicActiveSupportLogger", type: :reque
 
     context "given a Rails version >= 6.1", skip: Rails.version.to_f < 6.1 do
       after do
-        Sentry::Rails::Breadcrumb::MonotonicActiveSupportLogger.detach
+        Haystack::Rails::Breadcrumb::MonotonicActiveSupportLogger.detach
       end
 
       it "captures correct request data of normal requests" do
@@ -138,7 +138,7 @@ RSpec.describe "Sentry::Breadcrumbs::MonotonicActiveSupportLogger", type: :reque
         breadcrumbs = transaction[:breadcrumbs][:values]
         process_action_crumb = breadcrumbs.last
         expect(process_action_crumb[:category]).to eq("process_action.action_controller")
-        expect(process_action_crumb[:data].has_key?(Sentry::Rails::Tracing::START_TIMESTAMP_NAME)).to eq(false)
+        expect(process_action_crumb[:data].has_key?(Haystack::Rails::Tracing::START_TIMESTAMP_NAME)).to eq(false)
       end
     end
   end

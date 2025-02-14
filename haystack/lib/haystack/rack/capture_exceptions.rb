@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-module Sentry
+module Haystack
   module Rack
     class CaptureExceptions
-      ERROR_EVENT_ID_KEY = "sentry.error_event_id"
+      ERROR_EVENT_ID_KEY = "haystack.error_event_id"
       MECHANISM_TYPE = "rack"
       SPAN_ORIGIN = "auto.http.rack"
 
@@ -12,13 +12,13 @@ module Sentry
       end
 
       def call(env)
-        return @app.call(env) unless Sentry.initialized?
+        return @app.call(env) unless Haystack.initialized?
 
         # make sure the current thread has a clean hub
-        Sentry.clone_hub_to_current_thread
+        Haystack.clone_hub_to_current_thread
 
-        Sentry.with_scope do |scope|
-          Sentry.with_session_tracking do
+        Haystack.with_scope do |scope|
+          Haystack.with_session_tracking do
             scope.clear_breadcrumbs
             scope.set_transaction_name(env["PATH_INFO"], source: :url) if env["PATH_INFO"]
             scope.set_rack_env(env)
@@ -28,9 +28,9 @@ module Sentry
 
             begin
               response = @app.call(env)
-            rescue Sentry::Error
+            rescue Haystack::Error
               finish_transaction(transaction, 500)
-              raise # Don't capture Sentry errors
+              raise # Don't capture Haystack errors
             rescue Exception => e
               capture_exception(e, env)
               finish_transaction(transaction, 500)
@@ -58,7 +58,7 @@ module Sentry
       end
 
       def capture_exception(exception, env)
-        Sentry.capture_exception(exception, hint: { mechanism: mechanism }).tap do |event|
+        Haystack.capture_exception(exception, hint: { mechanism: mechanism }).tap do |event|
           env[ERROR_EVENT_ID_KEY] = event.event_id if event
         end
       end
@@ -71,8 +71,8 @@ module Sentry
           origin: SPAN_ORIGIN
         }
 
-        transaction = Sentry.continue_trace(env, **options)
-        Sentry.start_transaction(transaction: transaction, custom_sampling_context: { env: env }, **options)
+        transaction = Haystack.continue_trace(env, **options)
+        Haystack.start_transaction(transaction: transaction, custom_sampling_context: { env: env }, **options)
       end
 
 
@@ -84,7 +84,7 @@ module Sentry
       end
 
       def mechanism
-        Sentry::Mechanism.new(type: MECHANISM_TYPE, handled: false)
+        Haystack::Mechanism.new(type: MECHANISM_TYPE, handled: false)
       end
     end
   end

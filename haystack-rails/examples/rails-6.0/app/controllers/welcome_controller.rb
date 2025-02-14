@@ -1,5 +1,5 @@
 class WelcomeController < ApplicationController
-  before_action :set_sentry_context
+  before_action :set_haystack_context
 
   def index
     a = 1
@@ -8,7 +8,7 @@ class WelcomeController < ApplicationController
   end
 
   def connect_trace
-    # see the sinatra example under the `sentry-ruby` folder
+    # see the sinatra example under the `haystack` folder
     response = Net::HTTP.get_response(URI("http://localhost:4567/connect_trace"))
 
     render plain: response.code
@@ -41,14 +41,14 @@ class WelcomeController < ApplicationController
   end
 
   def report_demo
-    # @sentry_event_id = Raven.last_event_id
+    # @haystack_event_id = Raven.last_event_id
     render(status: 500)
   end
 
   private
 
-  def set_sentry_context
-    counter = (Sentry.get_current_scope.tags[:counter] || 0) + 1
-    Sentry.set_tags(counter: counter)
+  def set_haystack_context
+    counter = (Haystack.get_current_scope.tags[:counter] || 0) + 1
+    Haystack.set_tags(counter: counter)
   end
 end

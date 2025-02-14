@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Sentry
+module Haystack
   # @api private
   class Redis
     OP_NAME = "db.redis"
@@ -12,9 +12,9 @@ module Sentry
     end
 
     def instrument
-      return yield unless Sentry.initialized?
+      return yield unless Haystack.initialized?
 
-      Sentry.with_child_span(op: OP_NAME, start_timestamp: Sentry.utc_now.to_f, origin: SPAN_ORIGIN) do |span|
+      Haystack.with_child_span(op: OP_NAME, start_timestamp: Haystack.utc_now.to_f, origin: SPAN_ORIGIN) do |span|
         yield.tap do
           record_breadcrumb
 
@@ -34,11 +34,11 @@ module Sentry
     attr_reader :commands, :host, :port, :db
 
     def record_breadcrumb
-      return unless Sentry.initialized?
-      return unless Sentry.configuration.breadcrumbs_logger.include?(LOGGER_NAME)
+      return unless Haystack.initialized?
+      return unless Haystack.configuration.breadcrumbs_logger.include?(LOGGER_NAME)
 
-      Sentry.add_breadcrumb(
-        Sentry::Breadcrumb.new(
+      Haystack.add_breadcrumb(
+        Haystack::Breadcrumb.new(
           level: :info,
           category: OP_NAME,
           type: :info,
@@ -62,7 +62,7 @@ module Sentry
         command_set = { command: command.to_s.upcase }
         command_set[:key] = key if Utils::EncodingHelper.valid_utf_8?(key)
 
-        if Sentry.configuration.send_default_pii
+        if Haystack.configuration.send_default_pii
           command_set[:arguments] = arguments
                                     .select { |a| Utils::EncodingHelper.valid_utf_8?(a) }
                                     .join(" ")
@@ -78,19 +78,19 @@ module Sentry
 
     module OldClientPatch
       def logging(commands, &block)
-        Sentry::Redis.new(commands, host, port, db).instrument { super }
+        Haystack::Redis.new(commands, host, port, db).instrument { super }
       end
     end
 
     module GlobalRedisInstrumentation
       def call(command, redis_config)
-        Sentry::Redis
+        Haystack::Redis
           .new([command], redis_config.host, redis_config.port, redis_config.db)
           .instrument { super }
       end
 
       def call_pipelined(commands, redis_config)
-        Sentry::Redis
+        Haystack::Redis
           .new(commands, redis_config.host, redis_config.port, redis_config.db)
           .instrument { super }
       end
@@ -100,10 +100,10 @@ end
 
 if defined?(::Redis::Client)
   if Gem::Version.new(::Redis::VERSION) < Gem::Version.new("5.0")
-    Sentry.register_patch(:redis, Sentry::Redis::OldClientPatch, ::Redis::Client)
+    Haystack.register_patch(:redis, Haystack::Redis::OldClientPatch, ::Redis::Client)
   elsif defined?(RedisClient)
-    Sentry.register_patch(:redis) do
-      RedisClient.register(Sentry::Redis::GlobalRedisInstrumentation)
+    Haystack.register_patch(:redis) do
+      RedisClient.register(Haystack::Redis::GlobalRedisInstrumentation)
     end
   end
 end

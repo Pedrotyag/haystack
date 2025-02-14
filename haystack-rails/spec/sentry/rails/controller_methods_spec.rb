@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
-require "sentry/rails/controller_methods"
+require "haystack/rails/controller_methods"
 
-RSpec.describe Sentry::Rails::ControllerMethods do
+RSpec.describe Haystack::Rails::ControllerMethods do
   include described_class
 
   def request
@@ -19,13 +19,13 @@ RSpec.describe Sentry::Rails::ControllerMethods do
   end
 
   let(:transport) do
-    Sentry.get_current_client.transport
+    Haystack.get_current_client.transport
   end
 
   after do
     # make sure the scope isn't polluted
-    expect(Sentry.get_current_scope.tags).to eq({})
-    expect(Sentry.get_current_scope.rack_env).to eq({})
+    expect(Haystack.get_current_scope.tags).to eq({})
+    expect(Haystack.get_current_scope.rack_env).to eq({})
   end
 
   describe "#capture_message" do

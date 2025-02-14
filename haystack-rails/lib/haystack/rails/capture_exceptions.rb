@@ -1,24 +1,24 @@
 # frozen_string_literal: true
 
-module Sentry
+module Haystack
   module Rails
-    class CaptureExceptions < Sentry::Rack::CaptureExceptions
+    class CaptureExceptions < Haystack::Rack::CaptureExceptions
       RAILS_7_1 = Gem::Version.new(::Rails.version) >= Gem::Version.new("7.1.0.alpha")
       SPAN_ORIGIN = "auto.http.rails"
 
       def initialize(_)
         super
 
-        if Sentry.initialized?
-          @assets_regexp = Sentry.configuration.rails.assets_regexp
+        if Haystack.initialized?
+          @assets_regexp = Haystack.configuration.rails.assets_regexp
         end
       end
 
       private
 
       def collect_exception(env)
-        return nil if env["sentry.already_captured"]
-        super || env["action_dispatch.exception"] || env["sentry.rescued_exception"]
+        return nil if env["haystack.already_captured"]
+        super || env["action_dispatch.exception"] || env["haystack.rescued_exception"]
       end
 
       def transaction_op
@@ -27,9 +27,9 @@ module Sentry
 
       def capture_exception(exception, env)
         # the exception will be swallowed by ShowExceptions middleware
-        return if show_exceptions?(exception, env) && !Sentry.configuration.rails.report_rescued_exceptions
+        return if show_exceptions?(exception, env) && !Haystack.configuration.rails.report_rescued_exceptions
 
-        Sentry::Rails.capture_exception(exception).tap do |event|
+        Haystack::Rails.capture_exception(exception).tap do |event|
           env[ERROR_EVENT_ID_KEY] = event.event_id if event
         end
       end
@@ -46,8 +46,8 @@ module Sentry
           options.merge!(sampled: false)
         end
 
-        transaction = Sentry.continue_trace(env, **options)
-        Sentry.start_transaction(transaction: transaction, custom_sampling_context: { env: env }, **options)
+        transaction = Haystack.continue_trace(env, **options)
+        Haystack.start_transaction(transaction: transaction, custom_sampling_context: { env: env }, **options)
       end
 
       def show_exceptions?(exception, env)

@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
-module Sentry
+module Haystack
   module Metrics
     class Configuration
       include ArgumentCheckingHelper
 
       # Enable metrics usage.
-      # Starts a new {Sentry::Metrics::Aggregator} instance to aggregate metrics
+      # Starts a new {Haystack::Metrics::Aggregator} instance to aggregate metrics
       # and a thread to aggregate flush every 5 seconds.
       # @return [Boolean]
       attr_accessor :enabled

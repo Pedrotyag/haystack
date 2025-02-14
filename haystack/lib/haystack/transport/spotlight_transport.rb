@@ -3,7 +3,7 @@
 require "net/http"
 require "zlib"
 
-module Sentry
+module Haystack
   # Designed to just report events to Spotlight in development.
   class SpotlightTransport < HTTPTransport
     DEFAULT_SIDECAR_URL = "http://localhost:8969/stream"

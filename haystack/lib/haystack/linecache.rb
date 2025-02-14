@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
-module Sentry
+module Haystack
   # @api private
   class LineCache
     def initialize
       @cache = {}
     end
 
-    # Any linecache you provide to Sentry must implement this method.
+    # Any linecache you provide to Haystack must implement this method.
     # Returns an Array of Strings representing the lines in the source
     # file. The number of lines retrieved is (2 * context) + 1, the middle
     # line should be the line requested by lineno. See specs for more information.

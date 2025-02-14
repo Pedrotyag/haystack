@@ -1,16 +1,16 @@
 # frozen_string_literal: true
 
 require "rails"
-require "sentry-ruby"
-require "sentry/integrable"
-require "sentry/rails/tracing"
-require "sentry/rails/configuration"
-require "sentry/rails/engine"
-require "sentry/rails/railtie"
+require "haystack"
+require "haystack/integrable"
+require "haystack/rails/tracing"
+require "haystack/rails/configuration"
+require "haystack/rails/engine"
+require "haystack/rails/railtie"
 
-module Sentry
+module Haystack
   module Rails
     extend Integrable
-    register_integration name: "rails", version: Sentry::Rails::VERSION
+    register_integration name: "rails", version: Haystack::Rails::VERSION
   end
 end

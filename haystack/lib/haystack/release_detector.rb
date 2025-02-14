@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Sentry
+module Haystack
   # @api private
   class ReleaseDetector
     class << self
@@ -28,11 +28,11 @@ module Sentry
       end
 
       def detect_release_from_git
-        Sentry.sys_command("git rev-parse HEAD") if File.directory?(".git")
+        Haystack.sys_command("git rev-parse HEAD") if File.directory?(".git")
       end
 
       def detect_release_from_env
-        ENV["SENTRY_RELEASE"]
+        ENV["HAYSTACK_RELEASE"]
       end
     end
   end

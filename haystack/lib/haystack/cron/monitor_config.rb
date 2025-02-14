@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require "sentry/cron/monitor_schedule"
+require "haystack/cron/monitor_schedule"
 
-module Sentry
+module Haystack
   module Cron
     class MonitorConfig
       # The monitor schedule configuration

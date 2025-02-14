@@ -13,13 +13,13 @@ def raise_n_exceptions_with_tracepoint(n, with_sleep: false)
   TracePoint.new(:raise) do |tp|
     exception = tp.raised_exception
 
-    next if exception.instance_variable_get(:@sentry_locals)
+    next if exception.instance_variable_get(:@haystack_locals)
 
     locals = tp.binding.local_variables.each_with_object({}) do |local, result|
       result[local] = tp.binding.local_variable_get(local)
     end
 
-    exception.instance_variable_set(:@sentry_locals, locals)
+    exception.instance_variable_set(:@haystack_locals, locals)
   end.enable do
     raise_n_exceptions(n, with_sleep: with_sleep)
   end

@@ -3,7 +3,7 @@
 require "json"
 require "rbconfig"
 
-module Sentry
+module Haystack
   module Vernier
     class Output
       include Profiler::Helpers

@@ -2,9 +2,9 @@
 
 require "spec_helper"
 
-RSpec.describe Sentry::Rails::Tracing::ActiveStorageSubscriber, :subscriber, type: :request, skip: Rails.version.to_f <= 5.2 do
+RSpec.describe Haystack::Rails::Tracing::ActiveStorageSubscriber, :subscriber, type: :request, skip: Rails.version.to_f <= 5.2 do
   let(:transport) do
-    Sentry.get_current_client.transport
+    Haystack.get_current_client.transport
   end
 
   context "when transaction is sampled" do

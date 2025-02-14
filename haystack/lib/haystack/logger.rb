@@ -2,10 +2,10 @@
 
 require "logger"
 
-module Sentry
+module Haystack
   class Logger < ::Logger
-    LOG_PREFIX = "** [Sentry] "
-    PROGNAME   = "sentry"
+    LOG_PREFIX = "** [Haystack] "
+    PROGNAME   = "haystack"
 
     def initialize(*)
       super

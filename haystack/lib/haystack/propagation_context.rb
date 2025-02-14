@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
 require "securerandom"
-require "sentry/baggage"
+require "haystack/baggage"
 
-module Sentry
+module Haystack
   class PropagationContext
-    SENTRY_TRACE_REGEXP = Regexp.new(
+    HAYSTACK_TRACE_REGEXP = Regexp.new(
       "^[ \t]*" +  # whitespace
       "([0-9a-f]{32})?" +  # trace_id
       "-?([0-9a-f]{16})?" +  # span_id
@@ -41,20 +41,20 @@ module Sentry
       @incoming_trace = false
 
       if env
-        sentry_trace_header = env["HTTP_SENTRY_TRACE"] || env[SENTRY_TRACE_HEADER_NAME]
+        haystack_trace_header = env["HTTP_HAYSTACK_TRACE"] || env[HAYSTACK_TRACE_HEADER_NAME]
         baggage_header = env["HTTP_BAGGAGE"] || env[BAGGAGE_HEADER_NAME]
 
-        if sentry_trace_header
-          sentry_trace_data = self.class.extract_sentry_trace(sentry_trace_header)
+        if haystack_trace_header
+          haystack_trace_data = self.class.extract_haystack_trace(haystack_trace_header)
 
-          if sentry_trace_data
-            @trace_id, @parent_span_id, @parent_sampled = sentry_trace_data
+          if haystack_trace_data
+            @trace_id, @parent_span_id, @parent_sampled = haystack_trace_data
 
             @baggage =
               if baggage_header && !baggage_header.empty?
                 Baggage.from_incoming_header(baggage_header)
               else
-                # If there's an incoming sentry-trace but no incoming baggage header,
+                # If there's an incoming haystack-trace but no incoming baggage header,
                 # for instance in traces coming from older SDKs,
                 # baggage will be empty and frozen and won't be populated as head SDK.
                 Baggage.new({})
@@ -70,12 +70,12 @@ module Sentry
       @span_id = SecureRandom.uuid.delete("-").slice(0, 16)
     end
 
-    # Extract the trace_id, parent_span_id and parent_sampled values from a sentry-trace header.
+    # Extract the trace_id, parent_span_id and parent_sampled values from a haystack-trace header.
     #
-    # @param sentry_trace [String] the sentry-trace header value from the previous transaction.
+    # @param haystack_trace [String] the haystack-trace header value from the previous transaction.
     # @return [Array, nil]
-    def self.extract_sentry_trace(sentry_trace)
-      match = SENTRY_TRACE_REGEXP.match(sentry_trace)
+    def self.extract_haystack_trace(haystack_trace)
+      match = HAYSTACK_TRACE_REGEXP.match(haystack_trace)
       return nil if match.nil?
 
       trace_id, parent_span_id, sampled_flag = match[1..3]
@@ -94,7 +94,7 @@ module Sentry
       }
     end
 
-    # Returns the sentry-trace header from the propagation context.
+    # Returns the haystack-trace header from the propagation context.
     # @return [String]
     def get_traceparent
       "#{trace_id}-#{span_id}"
@@ -116,9 +116,9 @@ module Sentry
     private
 
     def populate_head_baggage
-      return unless Sentry.initialized?
+      return unless Haystack.initialized?
 
-      configuration = Sentry.configuration
+      configuration = Haystack.configuration
 
       items = {
         "trace_id" => trace_id,

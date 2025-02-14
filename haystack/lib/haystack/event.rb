@@ -2,13 +2,13 @@
 
 require "socket"
 require "securerandom"
-require "sentry/interface"
-require "sentry/backtrace"
-require "sentry/utils/real_ip"
-require "sentry/utils/request_id"
-require "sentry/utils/custom_inspection"
+require "haystack/interface"
+require "haystack/backtrace"
+require "haystack/utils/real_ip"
+require "haystack/utils/request_id"
+require "haystack/utils/custom_inspection"
 
-module Sentry
+module Haystack
   # This is an abstract class that defines the shared attributes of an event.
   # Please don't use it directly. The user-facing classes are its child classes.
   class Event
@@ -51,10 +51,10 @@ module Sentry
     def initialize(configuration:, integration_meta: nil, message: nil)
       # Set some simple default values
       @event_id      = SecureRandom.uuid.delete("-")
-      @timestamp     = Sentry.utc_now.iso8601
+      @timestamp     = Haystack.utc_now.iso8601
       @platform      = :ruby
       @type          = self.class::TYPE
-      @sdk           = integration_meta || Sentry.sdk_meta
+      @sdk           = integration_meta || Haystack.sdk_meta
 
       @user          = {}
       @extra         = {}
@@ -80,10 +80,10 @@ module Sentry
       @message = (message || "").byteslice(0..MAX_MESSAGE_SIZE_IN_BYTES)
     end
 
-    # @deprecated This method will be removed in v5.0.0. Please just use Sentry.configuration
+    # @deprecated This method will be removed in v5.0.0. Please just use Haystack.configuration
     # @return [Configuration]
     def configuration
-      Sentry.configuration
+      Haystack.configuration
     end
 
     # Sets the event's timestamp.
@@ -96,7 +96,7 @@ module Sentry
     # Sets the event's level.
     # @param level [String, Symbol]
     # @return [void]
-    def level=(level) # needed to meet the Sentry spec
+    def level=(level) # needed to meet the Haystack spec
       @level = level.to_s == "warn" ? :warning : level
     end
 
@@ -132,7 +132,7 @@ module Sentry
     private
 
     def add_request_interface(env)
-      @request = Sentry::RequestInterface.new(env: env, send_default_pii: @send_default_pii, rack_env_whitelist: @rack_env_whitelist)
+      @request = Haystack::RequestInterface.new(env: env, send_default_pii: @send_default_pii, rack_env_whitelist: @rack_env_whitelist)
     end
 
     def serialize_attributes

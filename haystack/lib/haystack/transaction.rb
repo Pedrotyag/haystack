@@ -1,18 +1,18 @@
 # frozen_string_literal: true
 
-require "sentry/baggage"
-require "sentry/profiler"
-require "sentry/propagation_context"
+require "haystack/baggage"
+require "haystack/profiler"
+require "haystack/propagation_context"
 
-module Sentry
+module Haystack
   class Transaction < Span
-    # @deprecated Use Sentry::PropagationContext::SENTRY_TRACE_REGEXP instead.
-    SENTRY_TRACE_REGEXP = PropagationContext::SENTRY_TRACE_REGEXP
+    # @deprecated Use Haystack::PropagationContext::HAYSTACK_TRACE_REGEXP instead.
+    HAYSTACK_TRACE_REGEXP = PropagationContext::HAYSTACK_TRACE_REGEXP
 
     UNLABELD_NAME = "<unlabeled transaction>"
     MESSAGE_PREFIX = "[Tracing]"
 
-    # https://develop.sentry.dev/sdk/event-payloads/transaction/#transaction-annotations
+    # https://develop.haystack.dev/sdk/event-payloads/transaction/#transaction-annotations
     SOURCES = %i[custom url route view component task]
 
     include LoggingHelper
@@ -39,13 +39,13 @@ module Sentry
     # @return [Hash]
     attr_reader :measurements
 
-    # @deprecated Use Sentry.get_current_hub instead.
+    # @deprecated Use Haystack.get_current_hub instead.
     attr_reader :hub
 
-    # @deprecated Use Sentry.configuration instead.
+    # @deprecated Use Haystack.configuration instead.
     attr_reader :configuration
 
-    # @deprecated Use Sentry.logger instead.
+    # @deprecated Use Haystack.logger instead.
     attr_reader :logger
 
     # The effective sample rate at which this transaction was sampled.
@@ -89,32 +89,32 @@ module Sentry
       init_span_recorder
     end
 
-    # @deprecated use Sentry.continue_trace instead.
+    # @deprecated use Haystack.continue_trace instead.
     #
-    # Initalizes a Transaction instance with a Sentry trace string from another transaction (usually from an external request).
+    # Initalizes a Transaction instance with a Haystack trace string from another transaction (usually from an external request).
     #
     # The original transaction will become the parent of the new Transaction instance. And they will share the same `trace_id`.
     #
     # The child transaction will also store the parent's sampling decision in its `parent_sampled` attribute.
-    # @param sentry_trace [String] the trace string from the previous transaction.
+    # @param haystack_trace [String] the trace string from the previous transaction.
     # @param baggage [String, nil] the incoming baggage header string.
     # @param hub [Hub] the hub that'll be responsible for sending this transaction when it's finished.
     # @param options [Hash] the options you want to use to initialize a Transaction instance.
     # @return [Transaction, nil]
-    def self.from_sentry_trace(sentry_trace, baggage: nil, hub: Sentry.get_current_hub, **options)
+    def self.from_haystack_trace(haystack_trace, baggage: nil, hub: Haystack.get_current_hub, **options)
       return unless hub.configuration.tracing_enabled?
-      return unless sentry_trace
+      return unless haystack_trace
 
-      sentry_trace_data = extract_sentry_trace(sentry_trace)
-      return unless sentry_trace_data
+      haystack_trace_data = extract_haystack_trace(haystack_trace)
+      return unless haystack_trace_data
 
-      trace_id, parent_span_id, parent_sampled = sentry_trace_data
+      trace_id, parent_span_id, parent_sampled = haystack_trace_data
 
       baggage =
         if baggage && !baggage.empty?
           Baggage.from_incoming_header(baggage)
         else
-          # If there's an incoming sentry-trace but no incoming baggage header,
+          # If there's an incoming haystack-trace but no incoming baggage header,
           # for instance in traces coming from older SDKs,
           # baggage will be empty and frozen and won't be populated as head SDK.
           Baggage.new({})
@@ -132,10 +132,10 @@ module Sentry
       )
     end
 
-    # @deprecated Use Sentry::PropagationContext.extract_sentry_trace instead.
+    # @deprecated Use Haystack::PropagationContext.extract_haystack_trace instead.
     # @return [Array, nil]
-    def self.extract_sentry_trace(sentry_trace)
-      PropagationContext.extract_sentry_trace(sentry_trace)
+    def self.extract_haystack_trace(haystack_trace)
+      PropagationContext.extract_haystack_trace(haystack_trace)
     end
 
     # @return [Hash]
@@ -219,8 +219,8 @@ module Sentry
       if sample_rate == true
         @sampled = true
       else
-        if Sentry.backpressure_monitor
-          factor = Sentry.backpressure_monitor.downsample_factor
+        if Haystack.backpressure_monitor
+          factor = Haystack.backpressure_monitor.downsample_factor
           @effective_sample_rate /= 2**factor
         end
 
@@ -236,7 +236,7 @@ module Sentry
       end
     end
 
-    # Finishes the transaction's recording and send it to Sentry.
+    # Finishes the transaction's recording and send it to Haystack.
     # @param hub [Hub] the hub that'll send this transaction. (Deprecated)
     # @return [TransactionEvent]
     def finish(hub: nil, end_timestamp: nil)
@@ -263,7 +263,7 @@ module Sentry
         event = hub.current_client.event_from_transaction(self)
         hub.capture_event(event)
       else
-        is_backpressure = Sentry.backpressure_monitor&.downsample_factor&.positive?
+        is_backpressure = Haystack.backpressure_monitor&.downsample_factor&.positive?
         reason = is_backpressure ? :backpressure : :sample_rate
         hub.current_client.transport.record_lost_event(reason, "transaction")
         hub.current_client.transport.record_lost_event(reason, "span")
@@ -271,7 +271,7 @@ module Sentry
     end
 
     # Get the existing frozen incoming baggage
-    # or populate one with sentry- items as the head SDK.
+    # or populate one with haystack- items as the head SDK.
     # @return [Baggage]
     def get_baggage
       populate_head_baggage if @baggage.nil? || @baggage.mutable

@@ -2,9 +2,9 @@
 
 require "logger"
 
-module Sentry
+module Haystack
   class Breadcrumb
-    module SentryLogger
+    module HaystackLogger
       LEVELS = {
         ::Logger::DEBUG => "debug",
         ::Logger::INFO => "info",
@@ -22,7 +22,7 @@ module Sentry
       def add_breadcrumb(severity, message = nil, progname = nil)
         # because the breadcrumbs now belongs to different Hub's Scope in different threads
         # we need to make sure the current thread's Hub has been set before adding breadcrumbs
-        return unless Sentry.initialized? && Sentry.get_current_hub
+        return unless Haystack.initialized? && Haystack.get_current_hub
 
         category = "logger"
 
@@ -61,15 +61,15 @@ module Sentry
         last_crumb = current_breadcrumbs.peek
         # try to avoid dupes from logger broadcasts
         if last_crumb.nil? || last_crumb.message != message
-          level = Sentry::Breadcrumb::SentryLogger::LEVELS.fetch(severity, nil)
-          crumb = Sentry::Breadcrumb.new(
+          level = Haystack::Breadcrumb::HaystackLogger::LEVELS.fetch(severity, nil)
+          crumb = Haystack::Breadcrumb.new(
             level: level,
             category: category,
             message: message,
             type: severity >= 3 ? "error" : level
           )
 
-          Sentry.add_breadcrumb(crumb, hint: { severity: severity })
+          Haystack.add_breadcrumb(crumb, hint: { severity: severity })
         end
       end
 
@@ -77,14 +77,14 @@ module Sentry
 
       def ignored_logger?(progname)
         progname == LOGGER_PROGNAME ||
-          Sentry.configuration.exclude_loggers.include?(progname)
+          Haystack.configuration.exclude_loggers.include?(progname)
       end
 
       def current_breadcrumbs
-        Sentry.get_current_scope.breadcrumbs
+        Haystack.get_current_scope.breadcrumbs
       end
     end
   end
 end
 
-::Logger.send(:prepend, Sentry::Breadcrumb::SentryLogger)
+::Logger.send(:prepend, Haystack::Breadcrumb::HaystackLogger)

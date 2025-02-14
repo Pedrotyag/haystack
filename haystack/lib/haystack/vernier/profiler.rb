@@ -4,7 +4,7 @@ require "securerandom"
 require_relative "../profiler/helpers"
 require_relative "output"
 
-module Sentry
+module Haystack
   module Vernier
     class Profiler
       EMPTY_RESULT = {}.freeze
@@ -102,11 +102,11 @@ module Sentry
       private
 
       def log(message)
-        Sentry.logger.debug(LOGGER_PROGNAME) { "[Profiler::Vernier] #{message}" }
+        Haystack.logger.debug(LOGGER_PROGNAME) { "[Profiler::Vernier] #{message}" }
       end
 
       def record_lost_event(reason)
-        Sentry.get_current_client&.transport&.record_lost_event(reason, "profile")
+        Haystack.get_current_client&.transport&.record_lost_event(reason, "profile")
       end
 
       def profile_meta

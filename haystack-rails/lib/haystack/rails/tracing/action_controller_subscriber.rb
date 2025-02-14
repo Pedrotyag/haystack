@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-require "sentry/rails/tracing/abstract_subscriber"
-require "sentry/rails/instrument_payload_cleanup_helper"
+require "haystack/rails/tracing/abstract_subscriber"
+require "haystack/rails/instrument_payload_cleanup_helper"
 
-module Sentry
+module Haystack
   module Rails
     module Tracing
       class ActionControllerSubscriber < AbstractSubscriber
@@ -14,8 +14,8 @@ module Sentry
         SPAN_ORIGIN = "auto.view.rails"
 
         def self.subscribe!
-          Sentry.logger.warn <<~MSG
-            DEPRECATION WARNING: sentry-rails has changed its approach on controller span recording and #{self.name} is now depreacted.
+          Haystack.logger.warn <<~MSG
+            DEPRECATION WARNING: haystack-rails has changed its approach on controller span recording and #{self.name} is now depreacted.
             Please stop using or referencing #{self.name} as it will be removed in the next major release.
           MSG
 

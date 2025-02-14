@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Sentry
+module Haystack
   module Cron
     class Configuration
       # Defaults set here will apply to all {Cron::MonitorConfig} objects unless overwritten.

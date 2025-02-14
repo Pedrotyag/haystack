@@ -3,16 +3,16 @@
 require "net/http"
 require "zlib"
 
-module Sentry
+module Haystack
   class HTTPTransport < Transport
     GZIP_ENCODING = "gzip"
     GZIP_THRESHOLD = 1024 * 30
-    CONTENT_TYPE = "application/x-sentry-envelope"
+    CONTENT_TYPE = "application/x-haystack-envelope"
 
     DEFAULT_DELAY = 60
     RETRY_AFTER_HEADER = "retry-after"
-    RATE_LIMIT_HEADER = "x-sentry-rate-limits"
-    USER_AGENT = "sentry-ruby/#{Sentry::VERSION}"
+    RATE_LIMIT_HEADER = "x-haystack-rate-limits"
+    USER_AGENT = "haystack/#{Haystack::VERSION}"
 
     # The list of errors ::Net::HTTP is known to raise
     # See https://github.com/ruby/ruby/blob/b0c639f249165d759596f9579fa985cb30533de6/lib/bundler/fetcher.rb#L281-L286
@@ -26,7 +26,7 @@ module Sentry
 
     def initialize(*args)
       super
-      log_debug("Sentry HTTP Transport will connect to #{@dsn.server}") if @dsn
+      log_debug("Haystack HTTP Transport will connect to #{@dsn.server}") if @dsn
     end
 
     def send_data(data)
@@ -44,7 +44,7 @@ module Sentry
       }
 
       auth_header = generate_auth_header
-      headers["X-Sentry-Auth"] = auth_header if auth_header
+      headers["X-Haystack-Auth"] = auth_header if auth_header
 
       response = conn.start do |http|
         request = ::Net::HTTP::Post.new(endpoint, headers)
@@ -60,13 +60,13 @@ module Sentry
       else
         error_info = "the server responded with status #{response.code}"
         error_info += "\nbody: #{response.body}"
-        error_info += " Error in headers is: #{response['x-sentry-error']}" if response["x-sentry-error"]
+        error_info += " Error in headers is: #{response['x-haystack-error']}" if response["x-haystack-error"]
 
-        raise Sentry::ExternalError, error_info
+        raise Haystack::ExternalError, error_info
       end
     rescue SocketError, *HTTP_ERRORS => e
       on_error if respond_to?(:on_error)
-      raise Sentry::ExternalError.new(e&.message)
+      raise Haystack::ExternalError.new(e&.message)
     end
 
     def endpoint
@@ -76,15 +76,15 @@ module Sentry
     def generate_auth_header
       return nil unless @dsn
 
-      now = Sentry.utc_now.to_i
+      now = Haystack.utc_now.to_i
       fields = {
-        "sentry_version" => PROTOCOL_VERSION,
-        "sentry_client" => USER_AGENT,
-        "sentry_timestamp" => now,
-        "sentry_key" => @dsn.public_key
+        "haystack_version" => PROTOCOL_VERSION,
+        "haystack_client" => USER_AGENT,
+        "haystack_timestamp" => now,
+        "haystack_key" => @dsn.public_key
       }
-      fields["sentry_secret"] = @dsn.secret_key if @dsn.secret_key
-      "Sentry " + fields.map { |key, value| "#{key}=#{value}" }.join(", ")
+      fields["haystack_secret"] = @dsn.secret_key if @dsn.secret_key
+      "Haystack " + fields.map { |key, value| "#{key}=#{value}" }.join(", ")
     end
 
     def conn
@@ -123,7 +123,7 @@ module Sentry
         if rate_limits = headers[RATE_LIMIT_HEADER]
           parse_rate_limit_header(rate_limits)
         elsif retry_after = headers[RETRY_AFTER_HEADER]
-          # although Sentry doesn't send a date string back
+          # although Haystack doesn't send a date string back
           # based on HTTP specification, this could be a date string (instead of an integer)
           retry_after = retry_after.to_i
           retry_after = DEFAULT_DELAY if retry_after == 0

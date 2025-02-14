@@ -30,9 +30,9 @@ RSpec.shared_context "with request mock" do
     end
   end
 
-  def stub_sentry_response
+  def stub_haystack_response
     # use bad request as an example is easier for verifying with error messages
-    stub_request(build_fake_response("400", body: { data: "bad sentry DSN public key" }))
+    stub_request(build_fake_response("400", body: { data: "bad haystack DSN public key" }))
   end
 
   def stub_normal_response(code: "200", &block)

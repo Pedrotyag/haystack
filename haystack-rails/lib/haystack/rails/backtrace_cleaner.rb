@@ -3,7 +3,7 @@
 require "active_support/backtrace_cleaner"
 require "active_support/core_ext/string/access"
 
-module Sentry
+module Haystack
   module Rails
     class BacktraceCleaner < ActiveSupport::BacktraceCleaner
       APP_DIRS_PATTERN = /\A(?:\.\/)?(?:app|config|lib|test|\(\w*\))/

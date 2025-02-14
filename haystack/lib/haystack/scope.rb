@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require "sentry/breadcrumb_buffer"
-require "sentry/propagation_context"
-require "sentry/attachment"
+require "haystack/breadcrumb_buffer"
+require "haystack/propagation_context"
+require "haystack/attachment"
 require "etc"
 
-module Sentry
+module Haystack
   class Scope
     include ArgumentCheckingHelper
 
@@ -346,7 +346,7 @@ module Sentry
       def runtime_context
         @runtime_context ||= {
           name: RbConfig::CONFIG["ruby_install_name"],
-          version: RUBY_DESCRIPTION || Sentry.sys_command("ruby -v")
+          version: RUBY_DESCRIPTION || Haystack.sys_command("ruby -v")
         }
       end
 

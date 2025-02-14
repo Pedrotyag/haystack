@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Sentry
+module Haystack
   class Mechanism < Interface
     # Generic identifier, mostly the source integration for this exception.
     # @return [String]

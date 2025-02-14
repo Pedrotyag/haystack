@@ -1,3 +1,3 @@
 build:
 	bundle install
-	gem build sentry-rails.gemspec
+	gem build haystack-rails.gemspec

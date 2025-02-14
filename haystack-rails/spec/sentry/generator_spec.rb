@@ -2,7 +2,7 @@
 
 require "fileutils"
 require "rails/generators/test_case"
-require "generators/sentry_generator"
+require "generators/haystack_generator"
 
 behavior_module = if defined?(Rails::Generators::Testing::Behaviour)
   Rails::Generators::Testing::Behaviour
@@ -10,7 +10,7 @@ else
   Rails::Generators::Testing::Behavior
 end
 
-RSpec.describe SentryGenerator do
+RSpec.describe HaystackGenerator do
   include behavior_module
   include FileUtils
   self.destination File.expand_path('../../tmp', __dir__)
@@ -29,7 +29,7 @@ RSpec.describe SentryGenerator do
       <!DOCTYPE html>
       <html>
         <head>
-          <title>SentryTesting</title>
+          <title>HaystackTesting</title>
           <meta name="viewport" content="width=device-width,initial-scale=1">
           <%= csrf_meta_tags %>
           <%= csp_meta_tag %>
@@ -48,13 +48,13 @@ RSpec.describe SentryGenerator do
   it "creates a initializer file" do
     run_generator
 
-    file = File.join(destination_root, "config/initializers/sentry.rb")
+    file = File.join(destination_root, "config/initializers/haystack.rb")
     expect(File).to exist(file)
     content = File.read(file)
     expect(content).to include(<<~RUBY)
-      Sentry.init do |config|
+      Haystack.init do |config|
         config.breadcrumbs_logger = [:active_support_logger]
-        config.dsn = ENV['SENTRY_DSN']
+        config.dsn = ENV['HAYSTACK_DSN']
         config.enable_tracing = true
       end
     RUBY
@@ -65,7 +65,7 @@ RSpec.describe SentryGenerator do
 
     content = File.read(layout_file)
 
-    expect(content).to include("Sentry.get_trace_propagation_meta.html_safe")
+    expect(content).to include("Haystack.get_trace_propagation_meta.html_safe")
   end
 
   it "doesn't inject meta tag when it's disabled" do
@@ -73,18 +73,18 @@ RSpec.describe SentryGenerator do
 
     content = File.read(layout_file)
 
-    expect(content).not_to include("Sentry.get_trace_propagation_meta.html_safe")
+    expect(content).not_to include("Haystack.get_trace_propagation_meta.html_safe")
   end
 
   context "with a DSN option" do
     it "creates a initializer file with the DSN" do
       run_generator %w[--dsn foobarbaz]
 
-      file = File.join(destination_root, "config/initializers/sentry.rb")
+      file = File.join(destination_root, "config/initializers/haystack.rb")
       expect(File).to exist(file)
       content = File.read(file)
       expect(content).to include(<<~RUBY)
-        Sentry.init do |config|
+        Haystack.init do |config|
           config.breadcrumbs_logger = [:active_support_logger]
           config.dsn = 'foobarbaz'
           config.enable_tracing = true

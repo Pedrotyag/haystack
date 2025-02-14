@@ -8,6 +8,6 @@ gem "sinatra"
 # Use Puma as the app server
 gem 'puma', '~> 3.11'
 
-gem 'sentry-ruby', path: "../../"
+gem 'haystack', path: "../../"
 
 gem "debug", github: "ruby/debug"

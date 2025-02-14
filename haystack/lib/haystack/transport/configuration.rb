@@ -1,21 +1,21 @@
 # frozen_string_literal: true
 
-module Sentry
+module Haystack
   class Transport
     class Configuration
-      # The timeout in seconds to open a connection to Sentry, in seconds.
+      # The timeout in seconds to open a connection to Haystack, in seconds.
       # Default value is 2.
       #
       # @return [Integer]
       attr_accessor :timeout
 
-      # The timeout in seconds to read data from Sentry, in seconds.
+      # The timeout in seconds to read data from Haystack, in seconds.
       # Default value is 1.
       #
       # @return [Integer]
       attr_accessor :open_timeout
 
-      # The proxy configuration to use to connect to Sentry.
+      # The proxy configuration to use to connect to Haystack.
       # Accepts either a URI formatted string, URI, or a hash with the `uri`,
       # `user`, and `password` keys.
       #
@@ -33,16 +33,16 @@ module Sentry
       #     password: "password"
       #   }
       #
-      # If you're using the default transport (`Sentry::HTTPTransport`),
+      # If you're using the default transport (`Haystack::HTTPTransport`),
       # proxy settings will also automatically be read from tne environment
       # variables (`HTTP_PROXY`, `HTTPS_PROXY`, `NO_PROXY`).
       #
       # @return [String, URI, Hash, nil]
       attr_accessor :proxy
 
-      # The SSL configuration to use to connect to Sentry.
+      # The SSL configuration to use to connect to Haystack.
       # You can either pass a `Hash` containing `ca_file` and `verification` keys,
-      # or you can set those options directly on the `Sentry::HTTPTransport::Configuration` object:
+      # or you can set those options directly on the `Haystack::HTTPTransport::Configuration` object:
       #
       # @example
       #   config.transport.ssl =  {
@@ -66,14 +66,14 @@ module Sentry
       attr_accessor :ssl_verification
 
       # The encoding to use to compress the request body.
-      # Default value is `Sentry::HTTPTransport::GZIP_ENCODING`.
+      # Default value is `Haystack::HTTPTransport::GZIP_ENCODING`.
       #
       # @return [String]
       attr_accessor :encoding
 
-      # The class to use as a transport to connect to Sentry.
-      # If this option not set, it will return `nil`, and Sentry will use
-      # `Sentry::HTTPTransport` by default.
+      # The class to use as a transport to connect to Haystack.
+      # If this option not set, it will return `nil`, and Haystack will use
+      # `Haystack::HTTPTransport` by default.
       #
       # @return [Class, nil]
       attr_reader :transport_class
@@ -87,7 +87,7 @@ module Sentry
 
       def transport_class=(klass)
         unless klass.is_a?(Class)
-          raise Sentry::Error.new("config.transport.transport_class must a class. got: #{klass.class}")
+          raise Haystack::Error.new("config.transport.transport_class must a class. got: #{klass.class}")
         end
 
         @transport_class = klass

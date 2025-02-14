@@ -8,7 +8,7 @@ Bundler.require(*Rails.groups)
 
 module Rails50
   class Application < Rails::Application
-    # https://github.com/getsentry/raven-ruby/issues/494
+    # https://github.com/gethaystack/raven-ruby/issues/494
     config.exceptions_app = self.routes
 
     # With this enabled 'exceptions_app' isnt executed, so instead we

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Sentry
+module Haystack
   module Metrics
     class Aggregator < ThreadedPeriodicWorker
       FLUSH_INTERVAL = 5
@@ -69,7 +69,7 @@ module Sentry
         updated_tags = get_updated_tags(tags)
         return if @before_emit && !@before_emit.call(key, updated_tags)
 
-        timestamp ||= Sentry.utc_now
+        timestamp ||= Haystack.utc_now
 
         # this is integer division and thus takes the floor of the division
         # and buckets into 10 second intervals
@@ -139,7 +139,7 @@ module Sentry
             flushable_buckets = @buckets
             @buckets = {}
           else
-            cutoff = Sentry.utc_now.to_i - ROLLUP_IN_SECONDS - @flush_shift
+            cutoff = Haystack.utc_now.to_i - ROLLUP_IN_SECONDS - @flush_shift
             flushable_buckets = @buckets.select { |k, _| k <= cutoff }
             @buckets.reject! { |k, _| k <= cutoff }
           end
@@ -198,7 +198,7 @@ module Sentry
       end
 
       def get_transaction_name
-        scope = Sentry.get_current_scope
+        scope = Haystack.get_current_scope
         return nil unless scope && scope.transaction_name
         return nil if scope.transaction_source_low_quality?
 
@@ -215,7 +215,7 @@ module Sentry
       end
 
       def process_span_aggregator(key, value)
-        scope = Sentry.get_current_scope
+        scope = Haystack.get_current_scope
         return nil unless scope && scope.span
         return nil if scope.transaction_source_low_quality?
 

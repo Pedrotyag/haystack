@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
 require "securerandom"
-require "sentry/metrics/local_aggregator"
+require "haystack/metrics/local_aggregator"
 
-module Sentry
+module Haystack
   class Span
     # We will try to be consistent with OpenTelemetry on this front going forward.
-    # https://develop.sentry.dev/sdk/performance/span-data-conventions/
+    # https://develop.haystack.dev/sdk/performance/span-data-conventions/
     module DataConventions
       URL = "url"
       HTTP_STATUS_CODE = "http.response.status_code"
@@ -131,7 +131,7 @@ module Sentry
       @span_id = span_id || SecureRandom.uuid.delete("-").slice(0, 16)
       @parent_span_id = parent_span_id
       @sampled = sampled
-      @start_timestamp = start_timestamp || Sentry.utc_now.to_f
+      @start_timestamp = start_timestamp || Haystack.utc_now.to_f
       @timestamp = timestamp
       @description = description
       @transaction = transaction
@@ -145,13 +145,13 @@ module Sentry
     # Finishes the span by adding a timestamp.
     # @return [self]
     def finish(end_timestamp: nil)
-      @timestamp = end_timestamp || @timestamp || Sentry.utc_now.to_f
+      @timestamp = end_timestamp || @timestamp || Haystack.utc_now.to_f
       self
     end
 
     # Generates a trace string that can be used to connect other transactions.
     # @return [String]
-    def to_sentry_trace
+    def to_haystack_trace
       sampled_flag = ""
       sampled_flag = @sampled ? 1 : 0 unless @sampled.nil?
 
@@ -309,7 +309,7 @@ module Sentry
 
     # Collects gauge metrics on the span for metric summaries.
     def metrics_local_aggregator
-      @metrics_local_aggregator ||= Sentry::Metrics::LocalAggregator.new
+      @metrics_local_aggregator ||= Haystack::Metrics::LocalAggregator.new
     end
 
     def metrics_summary

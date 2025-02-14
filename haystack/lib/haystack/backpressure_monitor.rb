@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Sentry
+module Haystack
   class BackpressureMonitor < ThreadedPeriodicWorker
     DEFAULT_INTERVAL = 10
     MAX_DOWNSAMPLE_FACTOR = 10
@@ -29,7 +29,7 @@ module Sentry
     end
 
     def check_health
-      @healthy = !(@client.transport.any_rate_limited? || Sentry.background_worker&.full?)
+      @healthy = !(@client.transport.any_rate_limited? || Haystack.background_worker&.full?)
     end
 
     def set_downsample_factor

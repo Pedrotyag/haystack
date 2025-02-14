@@ -1,6 +1,6 @@
 ## What's an extension?
 
-An extension is a gem built on top of the core Ruby SDK (`sentry-ruby`) that provides additional functionality or integration support to the users. For example, `sentry-rails` and `sentry-sidekiq` are SDK extensions that offer integration support with specific libraries. 
+An extension is a gem built on top of the core Ruby SDK (`sentry-ruby`) that provides additional functionality or integration support to the users. For example, `sentry-rails` and `haystack-sidekiq` are SDK extensions that offer integration support with specific libraries. 
 
 ## Sentry::Integrable
 

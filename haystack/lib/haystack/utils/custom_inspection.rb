@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Sentry
+module Haystack
   module CustomInspection
     def inspect
       attr_strings = (instance_variables - self.class::SKIP_INSPECTION_ATTRIBUTES).each_with_object([]) do |attr, result|

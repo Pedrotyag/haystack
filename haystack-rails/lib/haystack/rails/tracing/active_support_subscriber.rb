@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require "sentry/rails/tracing/abstract_subscriber"
+require "haystack/rails/tracing/abstract_subscriber"
 
-module Sentry
+module Haystack
   module Rails
     module Tracing
       class ActiveSupportSubscriber < AbstractSubscriber

@@ -15,7 +15,7 @@ Gem::Specification.new do |spec|
   spec.extra_rdoc_files = ["README.md", "LICENSE.txt"]
   spec.files = `git ls-files | grep -Ev '^(spec|benchmarks|examples|\.rubocop\.yml)'`.split("\n")
 
-  github_root_uri = 'https://github.com/your-organization/haystack'
+  github_root_uri = 'https://github.com/codefarm/haystack'
   spec.homepage = "#{github_root_uri}/tree/#{spec.version}/#{spec.name}"
 
   spec.metadata = {

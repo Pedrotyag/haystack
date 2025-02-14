@@ -62,8 +62,8 @@ class PostsController < ActionController::Base
     p = Post.find(params[:id])
 
     attach_params = {
-      io: File.open(File.join(Rails.root, 'public', 'sentry-logo.png')),
-      filename: 'sentry-logo.png'
+      io: File.open(File.join(Rails.root, 'public', 'haystack-logo.png')),
+      filename: 'haystack-logo.png'
     }
 
     p.cover.attach(attach_params)
@@ -78,7 +78,7 @@ class HelloController < ActionController::Base
   end
 
   def reporting
-    render plain: Sentry.last_event_id
+    render plain: Haystack.last_event_id
   end
 
   def view_exception
